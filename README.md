@@ -8,23 +8,29 @@
 [![GitHub stars](https://img.shields.io/github/stars/Nico-Curti/FiloBlu.svg?label=Stars&style=social)](https://github.com/Nico-Curti/FiloBlu/stargazers)
 [![GitHub watchers](https://img.shields.io/github/watchers/Nico-Curti/FiloBlu.svg?label=Watch&style=social)](https://github.com/Nico-Curti/FiloBlu/watchers)
 
-<p float="left">
-  <a href="https://github.com/UniboDIFABiophysics">
-    <div class="image">
-      <img src="https://cdn.rawgit.com/physycom/templates/697b327d/logo_unibo.png" width="90" height="90">
-    </div>
-  </a>
-  <a href="https://www.phys.uniroma1.it/fisica/">
-    <div class="image">
-      <img src="https://upload.wikimedia.org/wikipedia/it/d/d6/Sapienza_stemma.png" width="90" height="90">
-    </div>
-  </a>
-  <a href="http://www.bimind.it/">
-    <div>
-      <img src="http://www.bimind.it/images/logo-it.png" width="90" height="90">
-    </div>
-  </a>
-</p>
+<div class="row">
+  <div class="column">
+    <a href="https://github.com/UniboDIFABiophysics">
+      <div class="image">
+        <img src="https://cdn.rawgit.com/physycom/templates/697b327d/logo_unibo.png" width="90" height="90">
+      </div>
+    </a>
+  </div>
+  <div class="column">
+    <a href="https://www.phys.uniroma1.it/fisica/">
+      <div class="image">
+        <img src="https://upload.wikimedia.org/wikipedia/it/d/d6/Sapienza_stemma.png" width="90" height="90">
+      </div>
+    </a>
+  </div>
+  <div class=column>
+    <a href="http://www.bimind.it/">
+      <div>
+        <img src="http://www.bimind.it/images/logo-it.png" width="90" height="90">
+      </div>
+    </a>
+  </div>
+</div>
 
 # FiloBlu Service manager
 
