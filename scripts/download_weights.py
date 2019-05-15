@@ -12,7 +12,7 @@ from zipfile import ZipFile
 __package__ = "Download Neural Network weights file"
 __author__  = 'Nico Curti (nico.curti2@unibo.it)'
 
-def download_file_from_google_drive(Id, destination, total_length = ):
+def download_file_from_google_drive(Id, destination, total_length = ): ###TODO
 
   url = 'https://docs.google.com/uc?export=download'
 
@@ -65,9 +65,15 @@ def get_weights(Id):
   pwd = getpass.getpass('Password:')
 
   print ('Extracting files...', end='')
-  with ZipFile('./{}.zip'.format(file.lower())) as zipper:
-    zipper.extractall('.', pwd=pwd)
-  print ('[done]')
+
+  try:
+    with ZipFile('./{}.zip'.format(file.lower())) as zipper:
+      zipper.extractall('.', pwd=pwd)
+    print ('[done]')
+  except:
+    print ('\n')
+    print ('Wrong Password given! Ask to the authors for the right password')
+    exit (1)
 
   try:
     os.makedirs(os.path.join(here, '../data'), exist_ok=True)
