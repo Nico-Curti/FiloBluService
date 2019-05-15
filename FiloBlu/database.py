@@ -8,14 +8,15 @@ import mysql.connector
 from datetime import datetime, timedelta
 
 from misc import repeat_interval
+from process import load_model, read_dictionary, predict
 
-__author__ = 'Nico Curtix'
+__author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
 __package__ = 'Filo Blu Database connector'
 
 class FiloBluDB(object):
 
-  def __init__(self, config, logfile):
+  def __init__(self, config, logfile, network_weights, word_dictionary):
     """
     FiloBluDB constructor.
 
@@ -66,6 +67,33 @@ class FiloBluDB(object):
       os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
       exit(1)
 
+    self.logger.info('LOADING PROCESSING MODEL...')
+
+    try:
+
+      self.net = load_model(network_weights)
+      self.logger.info('MODEL LOADED')
+
+    except Exception as e:
+
+      self.logger.error(e)
+      logging.shutdown()
+      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
+      exit(1)
+
+    self.logger.info('LOADING WORD DICTIONARY...')
+
+    try:
+
+      self.dictionary = read_dictionary(word_dictionary)
+      self.logger.info('DICTIONARY LOADED')
+
+    except Exception as e:
+
+      self.logger.error(e)
+      logging.shutdown()
+      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
+      exit(1)
 
 
   def execute(self, query):
@@ -115,7 +143,7 @@ class FiloBluDB(object):
 
       self.data.fromkeys(self.data, [])
 
-      self.cursor.execute('SELECT * from messaggi WHERE scritto_il < "{}"'.format(timer))
+      self.cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}"'.format(now, timer))
       records = self.cursor.fetchall()
 
       self.logger.info('Found {} messages to process'.format(len(records)))
@@ -124,7 +152,10 @@ class FiloBluDB(object):
         for r, k in zip(rec, self.data.keys()):
           self.data[k].append(r)
 
-      # TODO: insert processing part here
+      if self.data['testo']:
+        score_predicted = predict(self.net, self.data['testo'], self.dictionary)
+        self.logger.info('Score estimated: {}'.format(score_predicted.ravel()))
+
     except Exception as e:
 
       self.logger.error(e)
@@ -214,16 +245,23 @@ class FiloBluDB(object):
 
 if __name__ == '__main__':
 
+  import time
+
   config_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'config.json')
 
   log_directory = os.path.join(os.path.dirname(__file__), '..', 'logs')
   os.makedirs(log_directory, exist_ok=True)
 
   logfile = os.path.join(log_directory, 'filo_blu_service.log')
+  dictionary = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat'))
+  model = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.h5'))
 
-  filoblu = FiloBluDB(config_file, logfile)
+
+  filoblu = FiloBluDB(config_file, logfile, model, dictionary)
 
   data = filoblu.callback_last_messages()
+
+  time.sleep(10)
 
   print(filoblu.message_ID)
   print(filoblu['testo'])

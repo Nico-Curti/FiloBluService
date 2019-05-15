@@ -7,14 +7,15 @@ import win32service
 import win32serviceutil
 from database import FiloBluDB
 
-__author__ = 'Nico Curtix'
+__author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
 __package__ = 'Filo Blu Service'
 
 
 # global variables that must be set and used in the following class
 # The paths are relative to the current python file
-MODEL = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'weights.pth'))
+DICTIONARY = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat'))
+MODEL = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.h5'))
 CONFIGFILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'config.json'))
 LOGFILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'logs', 'filo_blu_service.log'))
 
@@ -55,8 +56,7 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     The 'args' variable is used to start/stop/update/install the service and it must be the
     first sys.argv variable.
     """
-
-    self._db = FiloBluDB(CONFIGFILE, LOGFILE)
+    self._db = FiloBluDB(CONFIGFILE, LOGFILE, MODEL, DICTIONARY)
 
     win32serviceutil.ServiceFramework.__init__(self, args)
     self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
@@ -157,11 +157,20 @@ def parse_args(argv):
                       help='Network Model weights filename',
                       default=MODEL
                       )
+  parser.add_argument('--dictionary',
+                      dest='dictionary',
+                      type=str,
+                      required=False,
+                      action='store',
+                      help='Word dictionary sorted by frequency',
+                      default=DICTIONARY
+                      )
 
   args = parser.parse_args(argv)
   args.config = os.path.abspath(args.config)
   args.logs = os.path.abspath(args.logs)
   args.model = os.path.abspath(args.model)
+  args.dictionary = os.path.abspath(args.dictionary)
 
   return args
 
@@ -172,7 +181,7 @@ def print_help():
   usage function.
   """
   print ('Usage:')
-  print ('python filoblu_service.py [install|start|update|stop] -- [--config config_filename] [--logs logs_filename] [--model network_model_filename]')
+  print ('python filoblu_service.py [install|start|update|stop] -- [--config config_filename] [--logs logs_filename] [--model network_model_filename] [--dictionary words_dictionary_file]')
 
 
 if __name__ == '__main__':
@@ -199,12 +208,14 @@ if __name__ == '__main__':
     CONFIGFILE = args.config
     MODEL = args.model
     LOGFILE = args.logs
+    DICTIONARY = args.dictionary
 
     if argv[1] in ['start', 'update']:
       print ('Service used with the following arguments:')
       print ('  CONFIGFILE = {}'.format(CONFIGFILE))
       print ('  LOGFILE    = {}'.format(LOGFILE))
       print ('  MODEL      = {}'.format(MODEL))
+      print ('  DICTIONARY = {}'.format(DICTIONARY))
 
   # catch all the exception
   except:
@@ -214,12 +225,11 @@ if __name__ == '__main__':
       print ('  CONFIGFILE = {}'.format(CONFIGFILE))
       print ('  LOGFILE    = {}'.format(LOGFILE))
       print ('  MODEL      = {}'.format(MODEL))
+      print ('  DICTIONARY = {}'.format(DICTIONARY))
 
   # Create the logs directory if it does not exist.
   log_directory = os.path.dirname(LOGFILE)
   os.makedirs(log_directory, exist_ok=True)
 
-
   # run the service
   win32serviceutil.HandleCommandLine(FiloBluService)
-

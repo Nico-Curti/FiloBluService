@@ -4,9 +4,9 @@ import time
 import threading
 from functools import wraps
 
-__author__ = 'Nico Curtix'
-__email__ = 'nico.curti2@unibo.it'
 __package__ = 'Filo Blu miscellaneous'
+__author__ = 'Nico Curti'
+__email__ = 'nico.curti2@unibo.it'
 
 # Source: https://medium.com/@mgarod/dynamically-add-a-method-to-a-class-in-python-c49204b85bd6
 def add_method(cls):
