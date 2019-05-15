@@ -10,6 +10,15 @@ __package__ = 'Filo Blu miscellaneous'
 
 # Source: https://medium.com/@mgarod/dynamically-add-a-method-to-a-class-in-python-c49204b85bd6
 def add_method(cls):
+  """
+  This function create a very useful decorator to add an external and "new" function
+  to an existing class type (cls variable).
+
+  --------
+
+  Variable
+    - cls : (type) - class type in which the decorated function must be added.
+  """
 
   def decorator(func):
 
@@ -24,6 +33,15 @@ def add_method(cls):
   return decorator
 
 def repeat_interval(interval_seconds):
+  """
+  This function create a very useful decorator to asynchronously run the decorated function at each
+  interval time given as parameter.
+
+  ---------
+
+  Variable
+    - interval_seconds : (int) - clock time in seconds unit for the function repetition.
+  """
 
   def decorator(function):
 
@@ -44,24 +62,4 @@ def repeat_interval(interval_seconds):
 
   return decorator
 
-def repeat_precise_time(date):
-
-  def decorator(function):
-
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-      stopped = threading.Event()
-
-      def loop():
-        while not stopped.wait_for(time.time() == date):
-          function(*args, **kwargs)
-
-      t = threading.Thread(target=loop)
-      t.daemon = True # stop if the program exits
-      t.start()
-      return stopped
-
-    return wrapper
-
-  return decorator
 

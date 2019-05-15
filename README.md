@@ -8,29 +8,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/Nico-Curti/FiloBlu.svg?label=Stars&style=social)](https://github.com/Nico-Curti/FiloBlu/stargazers)
 [![GitHub watchers](https://img.shields.io/github/watchers/Nico-Curti/FiloBlu.svg?label=Watch&style=social)](https://github.com/Nico-Curti/FiloBlu/watchers)
 
-<div class="row">
-  <div class="column">
-    <a href="https://github.com/UniboDIFABiophysics">
-      <div class="image">
-        <img src="https://cdn.rawgit.com/physycom/templates/697b327d/logo_unibo.png" width="90" height="90">
-      </div>
-    </a>
-  </div>
-  <div class="column">
-    <a href="https://www.phys.uniroma1.it/fisica/">
-      <div class="image">
-        <img src="https://upload.wikimedia.org/wikipedia/it/d/d6/Sapienza_stemma.png" width="90" height="90">
-      </div>
-    </a>
-  </div>
-  <div class=column>
-    <a href="http://www.bimind.it/">
-      <div>
-        <img src="http://www.bimind.it/images/logo-it.png" width="90" height="90">
-      </div>
-    </a>
-  </div>
-</div>
+| [<img src="https://cdn.rawgit.com/physycom/templates/697b327d/logo_unibo.png" width="100px;"/><br /><sub><b>**UNIBO**</b></sub>](https://github.com/UniboDIFABiophysics)<br /> | [<img src="https://upload.wikimedia.org/wikipedia/it/d/d6/Sapienza_stemma.png" width="100px;"/><br /><sub><b>**Sapienza**</b></sub>](https://www.phys.uniroma1.it/fisica/)<br /> | [<img src="http://www.bimind.it/images/logo-it.png" width="100px;"/><br /><sub><b>**BiMind**</b></sub>](http://www.bimind.it/)<br /> |
+| :---: | :---: | :---: |
+
 
 # FiloBlu Service manager
 
@@ -46,8 +26,8 @@ The score attribution is made by a pre-trained neural network.
 
 ## Prerequisites
 
-The package is usable only on a Windows environment and it needs the MySQL support for the database management.
-Before install it pay attention to download the whole set of dependencies or just simple run:
+The package is intended for use only in a Windows environment and it needs the MySQL support for the database management.
+Before install the package pay attention to download the whole set of dependencies or just simple run:
 
 ```
 pip install -r requirements.txt
@@ -84,6 +64,9 @@ C:\Users\UserName\Anaconda3\Lib\site-packages\win32
 and make sure to run the service with an Administrator Powershell or just use the `filobluservice.ps1` script provided in the project folder changing the `project_folder` variable.
 This script can be also used as StartUp program to refresh and re-enable the service.
 
+In the `scripts` folder a downloader of the neural network weights file is provided.
+The file can be extracted only with a password: if you are interested in using our pre-trained model, please send an email to one of the [authors](https://github.com/Nico-Curti/FiloBluService/blob/master/AUTHORS.md).
+
 
 ## Installation
 
@@ -103,8 +86,7 @@ These scores are then written in the DB.
 
 * **Nico Curti** [git](https://github.com/Nico-Curti), [unibo](https://www.unibo.it/sitoweb/nico.curti2)
 * **Andrea Ciardiello** [uniroma](https://phd.uniroma1.it/web/ANDREA-CIARDIELLO_nP1268232_IT.aspx)
-* **Stefano Giagu** [git](https://github.com/stefanogiagu), [uniroma](https://gomppublic.uniroma1.it/Docenti/Render.aspx?UID=9b08c277-5de0-4441-b3a6-d8e27d85e52f
-)
+* **Stefano Giagu** [git](https://github.com/stefanogiagu), [uniroma](https://gomppublic.uniroma1.it/Docenti/Render.aspx?UID=9b08c277-5de0-4441-b3a6-d8e27d85e52f)
 
 See also the list of [contributors](https://github.com/Nico-Curti/FiloBlu/contributors) [![GitHub contributors](https://img.shields.io/github/contributors/Nico-Curti/FiloBlu.svg?style=plastic)](https://github.com/Nico-Curti/FiloBlu/graphs/contributors/) who participated in this project.
 

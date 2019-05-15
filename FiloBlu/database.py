@@ -16,6 +16,20 @@ __package__ = 'Filo Blu Database connector'
 class FiloBluDB(object):
 
   def __init__(self, config, logfile):
+    """
+    FiloBluDB constructor.
+
+    ---------
+
+    Variables
+      - config : string - config file in json fmt. The file must contains the following fields:
+                            "host" : "localhost_or_the_IP_number",
+                            "username" : "db_username",
+                            "password" : "db_pwd",
+                            "database" : "db_name"
+
+      - logfile : string - log filename in which the stdout and stderr are dumped.
+    """
 
     self.logfilename = logfile
     logging.basicConfig(level=logging.DEBUG,
@@ -49,12 +63,24 @@ class FiloBluDB(object):
 
       self.logger.error(e)
       logging.shutdown()
-      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(datetime.now()))
+      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
       exit(1)
 
 
 
   def execute(self, query):
+    """
+    Test function to execute a simple query without filters.
+    This function is useful for MySQL beginners.
+
+    ---------
+
+    Variables
+      - query : string - text of the query in MySQL fmt.
+
+    Return
+      - list type - the result of the query
+    """
 
     self.cursor.execute(query)
     return list(self.cursor)
@@ -63,6 +89,21 @@ class FiloBluDB(object):
   # read new text message and process them every 2 seconds
   @repeat_interval(2)
   def callback_last_messages(self):
+    """
+    Callback function.
+    This function evaluate the current time and executes a query on the db filtering by the time
+    (keyword 'scritto_il').
+    This method is tuned over the FiloBluDB format and the query must be changed if you run on
+    different database.
+    The extracted records are then re-organized inside the 'data' variable and processed by the
+    neural network algorithm to extract the score values.
+    The results are then re-written in the db.
+    # miss score description
+
+    The function is called every 2 seconds.
+    Change the value in the decorator for a different clock time and pay attention to change
+    the query for the time in the db (see the comments below).
+    """
 
     self.logger.info('Calling Callback message')
 
@@ -77,22 +118,35 @@ class FiloBluDB(object):
       self.cursor.execute('SELECT * from messaggi WHERE scritto_il < "{}"'.format(timer))
       records = self.cursor.fetchall()
 
+      self.logger.info('Found {} messages to process'.format(len(records)))
+
       for rec in records:
         for r, k in zip(rec, self.data.keys()):
           self.data[k].append(r)
-      return self.data
 
+      # TODO: insert processing part here
     except Exception as e:
 
       self.logger.error(e)
       logging.shutdown()
-      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(datetime.now()))
+      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
       exit(1)
 
 
   # clear log every day
   @repeat_interval(24 * 60 * 60)
   def callback_clear_log(self):
+    """
+    Callback function.
+    This function clear the current log file and restart the logging on the same file.
+    If an error occurs an error message is written in the current logfile and the file
+    is saved with the current time (UNIX) in the name.
+    The service is stopped if an error occures (this option can be deleted removing the exit at the
+    end of the exception catch).
+
+    The function is called every day (24 hours * 60 minutes * 60 seconds).
+    Change the value in the decorator for a different clock time.
+    """
 
     self.logger.info('Calling Callback clear log')
 
@@ -111,24 +165,48 @@ class FiloBluDB(object):
 
       self.logger.error(e)
       logging.shutdown()
-      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(datetime.now()))
+      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
       exit(1)
 
 
 
   @property
   def get_logger(self):
+    """
+    Class member to obtain the logger variable.
+    It can be used to extract the logger outside the class functions.
+    """
     return self.logger
 
 
 
   @property
   def message_ID(self):
+    """
+    Class member to extract the full set of the available keys in the data member dictionary.
+
+    ---------
+
+    Return
+      - list type - the full set of available keys.
+    """
     return list(self.data.keys())
 
 
 
   def __getitem__(self, key):
+    """
+    Overload of the [] operator.
+
+    ---------
+
+    Variable
+      - key : string - key argument for the data member dictionary. The full set of possible keys can be
+                       obtained by the 'message_ID' member of the class.
+
+    Return
+      - list type - the object stored in the data object at the given key
+    """
     return self.data[key]
 
 
