@@ -124,7 +124,9 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     This second callback must be called with a larger time interval (example each day).
     """
 
-    self._db.callback_last_messages(self._net, self._dict)
+    self._db.callback_read_last_messages()
+    self._db.callback_process_messages(self._net, self._dict)
+    self._db.callback_write_score_messages()
     self._db.callback_clear_log()
 
     self._db.get_logger.info('FILO BLU Service: STARTING UP')

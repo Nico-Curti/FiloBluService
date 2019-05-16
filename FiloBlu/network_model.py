@@ -22,16 +22,16 @@ class NetworkModel(object):
 
   def __init__ (self, weights_filename):
 
-    self.net = self.__load_model(weights_filename)
+    self.net = self._load_model(weights_filename)
 
 
-  def __load_model(self, weights_filename):
+  def _load_model(self, weights_filename):
 
-    nnet = self.__model()
+    nnet = self._model()
     nnet.load_weights(weights_filename)
     return nnet
 
-  def __model(self):
+  def _model(self):
     """
     NNet Architecture
     """
@@ -56,6 +56,11 @@ class NetworkModel(object):
 
     return nnet
 
+  @property
+  def summary(self):
+    return self.net.summary
+
+
 
   def predict(self, text_list, dictionary):
     # pre-process data
@@ -69,7 +74,7 @@ class NetworkModel(object):
 
     # predict the whole list
     y_pred = self.net.predict(data, batch_size=self.BATCH_SIZE)
-    return y_pred
+    return y_pred.ravel().tolist()
 
 
 if __name__ == '__main__':
@@ -81,6 +86,7 @@ if __name__ == '__main__':
   dictionary_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat')
 
   nnet = NetworkModel(weightfile)
+  print(nnet.summary())
 
   ilist = ['buongiorno dottore oggi ho la febbre alta e un fortissimo dolore al rene da una settimana',
            'ciao e tanti auguri di buon natale a lei e famiglia']

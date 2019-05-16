@@ -31,33 +31,34 @@ class FiloBluDB(object):
       - logfile : string - log filename in which the stdout and stderr are dumped.
     """
 
-    self.logfilename = logfile
+    self._logfilename = logfile
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         datefmt='%m-%d %H:%M:%S',
-                        filename=self.logfilename,
+                        filename=self._logfilename,
                         filemode='w')
-    self.logger = logging.getLogger()
-    self.logger.addHandler(logging.FileHandler(self.logfilename, 'a'))
-    self.logger.info('DB CONNECTION..')
+    self._logger = logging.getLogger()
+    self._logger.addHandler(logging.FileHandler(self._logfilename, 'a'))
+    self._logger.info('DB CONNECTION..')
 
     try:
 
       with open(config, 'r') as fp:
         config = json.load(fp)
 
-      self.db = mysql.connector.connect(
+      self._db = mysql.connector.connect(
                                         host = config['host'],
                                         user = config['username'],
                                         passwd = config['password'],
                                         database = config['database']
                                         )
-      self.logger.info ('CONNECTION DB ESTABLISHED')
+      self._logger.info ('CONNECTION DB ESTABLISHED')
 
-      self.cursor = self.db.cursor()
-      self.cursor.execute('SHOW columns FROM messaggi')
-      message_id = map(operator.itemgetter(0), self.cursor)
-      self.data = {k : [] for k in message_id}
+      self._cursor = self._db.cursor()
+      self._cursor.execute('SHOW columns FROM messaggi')
+      self._key_id = map(operator.itemgetter(0), self._cursor)
+      self._data = {k : [] for k in self._key_id}
+      self._score = None
 
     except Exception as e:
 
@@ -79,13 +80,13 @@ class FiloBluDB(object):
       - list type - the result of the query
     """
 
-    self.cursor.execute(query)
-    return list(self.cursor)
+    self._cursor.execute(query)
+    return list(self._cursor)
 
 
   # read new text message and process them every 2 seconds
   @repeat_interval(2)
-  def callback_last_messages(self, network, dictionary):
+  def callback_read_last_messages(self):
     """
     Callback function.
     This function evaluate the current time and executes a query on the db filtering by the time
@@ -102,7 +103,7 @@ class FiloBluDB(object):
     the query for the time in the db (see the comments below).
     """
 
-    self.logger.info('Calling Callback message')
+    self._logger.info('Calling Callback message')
 
     try:
 
@@ -110,20 +111,61 @@ class FiloBluDB(object):
       ########## pay attention to modify this line if you change the repeat interval!!!!
       timer = now - timedelta(seconds=2)
 
-      self.data.fromkeys(self.data, [])
+      self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}"'.format(now, timer))
+      #self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}"'.format(now)) # FOR DEBUG
+      records = self._cursor.fetchall()
 
-      self.cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}"'.format(now, timer))
-      records = self.cursor.fetchall()
+      if records:
+        self._logger.info('Found {} messages to process'.format(len(records)))
+        self._data = {k : [] for k in self._key_id}
 
-      self.logger.info('Found {} messages to process'.format(len(records)))
+        for rec in records:
+          for r, k in zip(rec, self._key_id):
+            self._data[k].append(r)
 
-      for rec in records:
-        for r, k in zip(rec, self.data.keys()):
-          self.data[k].append(r)
+    except Exception as e:
 
-      if self.data['testo']:
-        score_predicted = network.predict(self.data['testo'], dictionary)
-        self.logger.info('Score estimated: {}'.format(score_predicted.ravel()))
+      self.log_error(e)
+
+
+  def callback_process_messages(self, network, dictionary):
+    """
+    Callback function.
+    This function evaluate the message stored in the self.data variable
+
+    The function is called every second.
+    """
+
+    self._logger.info('Calling Callback process message')
+
+    try:
+
+      if self._data:
+
+        # Tensorflow does not work in thread!!! BUG
+        self._score += network.predict(self._data['testo'], dictionary)
+        self._data.clear()
+
+    except Exception as e:
+
+      self.log_error(e)
+
+  @repeat_interval(1)
+  def callback_write_score_messages(self):
+    """
+    Callback function.
+    This function write the scores of messages stored in the self.score variable
+
+    The function is called every second.
+    """
+
+    self._logger.info('Calling Callback write message')
+
+    try:
+
+      if self._score:
+        self._logger.info('Score last messages: {}'.format(self._score))
+        self._score = None
 
     except Exception as e:
 
@@ -145,7 +187,7 @@ class FiloBluDB(object):
     Change the value in the decorator for a different clock time.
     """
 
-    self.logger.info('Calling Callback clear log')
+    self._logger.info('Calling Callback clear log')
 
     try:
 
@@ -153,10 +195,10 @@ class FiloBluDB(object):
       logging.basicConfig(level=logging.DEBUG,
                           format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                           datefmt='%m-%d %H:%M:%S',
-                          filename=self.logfilename,
+                          filename=self._logfilename,
                           filemode='w')
-      self.logger = logging.getLogger()
-      self.logger.addHandler(logging.FileHandler(self.logfilename, 'a'))
+      self._logger = logging.getLogger()
+      self._logger.addHandler(logging.FileHandler(self._logfilename, 'a'))
 
     except Exception as e:
 
@@ -168,10 +210,9 @@ class FiloBluDB(object):
     Write exception in logfile and exit.
     The logfile with the error is rename with the UNIX time to prevent clear log callback
     """
-    self.logger.error(exception)
+    self._logger.error(exception)
     logging.shutdown()
-    os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
-    exit(1)
+    os.rename(self._logfilename, self._logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
 
 
   @property
@@ -180,7 +221,7 @@ class FiloBluDB(object):
     Class member to obtain the logger variable.
     It can be used to extract the logger outside the class functions.
     """
-    return self.logger
+    return self._logger
 
 
 
@@ -194,7 +235,7 @@ class FiloBluDB(object):
     Return
       - list type - the full set of available keys.
     """
-    return list(self.data.keys())
+    return list(self._key_id)
 
 
 
@@ -211,7 +252,7 @@ class FiloBluDB(object):
     Return
       - list type - the object stored in the data object at the given key
     """
-    return self.data[key]
+    return self._data[key]
 
 
 
@@ -237,7 +278,9 @@ if __name__ == '__main__':
   dictionary = read_dictionary(dictionary)
   network = NetworkModel(model)
 
-  filoblu.callback_last_messages(network, dictionary)
+  filoblu.callback_read_last_messages()
+  filoblu.callback_process_messages(network, dictionary)
+  filoblu.callback_write_score_messages()
 
   time.sleep(10)
 
