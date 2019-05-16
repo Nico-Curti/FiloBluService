@@ -5,6 +5,7 @@ import json
 import logging
 import operator
 import mysql.connector
+from queue import Queue
 from datetime import datetime, timedelta
 
 from misc import repeat_interval
@@ -14,6 +15,8 @@ __email__ = 'nico.curti2@unibo.it'
 __package__ = 'Filo Blu Database connector'
 
 class FiloBluDB(object):
+
+  MAX_SIZE_QUEUE = 100
 
   def __init__(self, config, logfile):
     """
@@ -57,8 +60,9 @@ class FiloBluDB(object):
       self._cursor = self._db.cursor()
       self._cursor.execute('SHOW columns FROM messaggi')
       self._key_id = map(operator.itemgetter(0), self._cursor)
-      self._data = {k : [] for k in self._key_id}
-      self._score = None
+      self._data = {k : [] for k in self._key_id} # I don't know why but without you the program crash
+      self._queue = Queue(maxsize=self.MAX_SIZE_QUEUE)
+      self._score = []
 
     except Exception as e:
 
@@ -111,17 +115,16 @@ class FiloBluDB(object):
       ########## pay attention to modify this line if you change the repeat interval!!!!
       timer = now - timedelta(seconds=2)
 
-      self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}"'.format(now, timer))
-      #self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}"'.format(now)) # FOR DEBUG
+      #self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}"'.format(now, timer))
+      self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}"'.format(now)) # FOR DEBUG
       records = self._cursor.fetchall()
 
       if records:
         self._logger.info('Found {} messages to process'.format(len(records)))
-        self._data = {k : [] for k in self._key_id}
-
-        for rec in records:
-          for r, k in zip(rec, self._key_id):
-            self._data[k].append(r)
+        self._queue.put([rec[3] for rec in records]) # tex message
+        #for rec in records:
+        #  for r, k in zip(rec, self._key_id):
+        #    self._data[k].append(r)
 
     except Exception as e:
 
@@ -143,8 +146,8 @@ class FiloBluDB(object):
       if self._data:
 
         # Tensorflow does not work in thread!!! BUG
-        self._score += network.predict(self._data['testo'], dictionary)
-        self._data.clear()
+        #self._score = [42]
+        self._score += network.predict(self._queue.get(), dictionary)
 
     except Exception as e:
 
@@ -165,7 +168,7 @@ class FiloBluDB(object):
 
       if self._score:
         self._logger.info('Score last messages: {}'.format(self._score))
-        self._score = None
+        self._score = []
 
     except Exception as e:
 
@@ -283,9 +286,4 @@ if __name__ == '__main__':
   filoblu.callback_write_score_messages()
 
   time.sleep(10)
-
-  #print(filoblu.message_ID)
-  #print(filoblu['testo'])
-
-
 

@@ -44,7 +44,7 @@ def repeat_interval(interval_seconds):
   ---------
 
   Variable
-    - interval_seconds : (int) - clock time in seconds unit for the function repetition.
+    - interval_seconds : (float) - clock time in seconds unit for the function repetition.
   """
 
   def decorator(function):

@@ -2,6 +2,7 @@
 
 import os
 import sys
+import time
 import win32event
 import win32service
 import win32serviceutil
@@ -125,8 +126,11 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     """
 
     self._db.callback_read_last_messages()
+    time.sleep(.5)
     self._db.callback_process_messages(self._net, self._dict)
+    time.sleep(.5)
     self._db.callback_write_score_messages()
+
     self._db.callback_clear_log()
 
     self._db.get_logger.info('FILO BLU Service: STARTING UP')
