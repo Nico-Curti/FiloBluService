@@ -13,7 +13,7 @@ __package__ = 'Download Neural Network weights file'
 __author__  = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
 
-def download_file_from_google_drive(Id, destination, total_length = 803075):
+def download_file_from_google_drive(Id, destination, total_length = 801847):
 
   url = 'https://docs.google.com/uc?export=download'
 
@@ -56,7 +56,7 @@ def download_file_from_google_drive(Id, destination, total_length = 803075):
 
 def get_weights(Id):
 
-  size = 803075
+  size = 801847
   file = 'filoblu_data'
   print ('Download {0} file...'.format(file))
   download_file_from_google_drive(Id, './{}.zip'.format(file.lower()), size)
@@ -69,7 +69,7 @@ def get_weights(Id):
 
   try:
     with ZipFile('./{}.zip'.format(file.lower())) as zipper:
-      zipper.extractall('.', pwd=pwd)
+      zipper.extractall('.', pwd=pwd.encode())
     print ('[done]')
   except:
     print ('\n')
@@ -89,4 +89,4 @@ def get_weights(Id):
 
 if __name__ == '__main__':
 
-  get_weights('') ### TODO
+  get_weights('13hoXQhqUR2IosPNpyyM8hu1T6nbaU6zP')
