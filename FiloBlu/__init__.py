@@ -4,9 +4,8 @@
 
 from filoblu_service import FiloBluService
 from database import FiloBluDB
-from misc import add_method, repeat_interval
-from model import model, MAX_WORDS, BATCH_SIZE
-from process import load_model, read_dictionary, predict
+from misc import add_method, repeat_interval, read_dictionary, preprocess, vectorize_sequence
+from network_model import NetworkModel
 
 __all__ = ['FiloBluService']
 

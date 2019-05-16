@@ -8,7 +8,6 @@ import mysql.connector
 from datetime import datetime, timedelta
 
 from misc import repeat_interval
-from process import load_model, read_dictionary, predict
 
 __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
@@ -16,7 +15,7 @@ __package__ = 'Filo Blu Database connector'
 
 class FiloBluDB(object):
 
-  def __init__(self, config, logfile, network_weights, word_dictionary):
+  def __init__(self, config, logfile):
     """
     FiloBluDB constructor.
 
@@ -62,38 +61,8 @@ class FiloBluDB(object):
 
     except Exception as e:
 
-      self.logger.error(e)
-      logging.shutdown()
-      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
-      exit(1)
+      self.log_error(e)
 
-    self.logger.info('LOADING PROCESSING MODEL...')
-
-    try:
-
-      self.net = load_model(network_weights)
-      self.logger.info('MODEL LOADED')
-
-    except Exception as e:
-
-      self.logger.error(e)
-      logging.shutdown()
-      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
-      exit(1)
-
-    self.logger.info('LOADING WORD DICTIONARY...')
-
-    try:
-
-      self.dictionary = read_dictionary(word_dictionary)
-      self.logger.info('DICTIONARY LOADED')
-
-    except Exception as e:
-
-      self.logger.error(e)
-      logging.shutdown()
-      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
-      exit(1)
 
 
   def execute(self, query):
@@ -116,7 +85,7 @@ class FiloBluDB(object):
 
   # read new text message and process them every 2 seconds
   @repeat_interval(2)
-  def callback_last_messages(self):
+  def callback_last_messages(self, network, dictionary):
     """
     Callback function.
     This function evaluate the current time and executes a query on the db filtering by the time
@@ -153,15 +122,12 @@ class FiloBluDB(object):
           self.data[k].append(r)
 
       if self.data['testo']:
-        score_predicted = predict(self.net, self.data['testo'], self.dictionary)
+        score_predicted = network.predict(self.data['testo'], dictionary)
         self.logger.info('Score estimated: {}'.format(score_predicted.ravel()))
 
     except Exception as e:
 
-      self.logger.error(e)
-      logging.shutdown()
-      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
-      exit(1)
+      self.log_error(e)
 
 
   # clear log every day
@@ -194,11 +160,18 @@ class FiloBluDB(object):
 
     except Exception as e:
 
-      self.logger.error(e)
-      logging.shutdown()
-      os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
-      exit(1)
+      self.log_error(e)
 
+
+  def log_error(self, exception):
+    """
+    Write exception in logfile and exit.
+    The logfile with the error is rename with the UNIX time to prevent clear log callback
+    """
+    self.logger.error(exception)
+    logging.shutdown()
+    os.rename(self.logfilename, self.logfilename + '.{}_err'.format(int(datetime.now().timestamp())) )
+    exit(1)
 
 
   @property
@@ -247,6 +220,9 @@ if __name__ == '__main__':
 
   import time
 
+  from misc import read_dictionary
+  from network_model import NetworkModel
+
   config_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'config.json')
 
   log_directory = os.path.join(os.path.dirname(__file__), '..', 'logs')
@@ -256,15 +232,17 @@ if __name__ == '__main__':
   dictionary = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat'))
   model = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.h5'))
 
+  filoblu = FiloBluDB(config_file, logfile)
 
-  filoblu = FiloBluDB(config_file, logfile, model, dictionary)
+  dictionary = read_dictionary(dictionary)
+  network = NetworkModel(model)
 
-  data = filoblu.callback_last_messages()
+  filoblu.callback_last_messages(network, dictionary)
 
   time.sleep(10)
 
-  print(filoblu.message_ID)
-  print(filoblu['testo'])
+  #print(filoblu.message_ID)
+  #print(filoblu['testo'])
 
 
 

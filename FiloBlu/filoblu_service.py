@@ -6,6 +6,8 @@ import win32event
 import win32service
 import win32serviceutil
 from database import FiloBluDB
+from misc import read_dictionary
+from network_model import NetworkModel
 
 __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
@@ -56,7 +58,30 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     The 'args' variable is used to start/stop/update/install the service and it must be the
     first sys.argv variable.
     """
-    self._db = FiloBluDB(CONFIGFILE, LOGFILE, MODEL, DICTIONARY)
+    self._db = FiloBluDB(CONFIGFILE, LOGFILE)
+
+    self._db.get_logger.info('LOADING PROCESSING MODEL...')
+
+    try:
+
+      self._net = NetworkModel(MODEL)
+      self._db.get_logger.info('MODEL LOADED')
+
+    except Exception as e:
+
+      self._db.log_error(e)
+
+    self._db.get_logger.info('LOADING WORD DICTIONARY...')
+
+    try:
+
+      self._dict = read_dictionary(DICTIONARY)
+      self._db.get_logger.info('DICTIONARY LOADED')
+
+    except Exception as e:
+
+      self._db.log_error(e)
+
 
     win32serviceutil.ServiceFramework.__init__(self, args)
     self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
@@ -99,7 +124,7 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     This second callback must be called with a larger time interval (example each day).
     """
 
-    self._db.callback_last_messages()
+    self._db.callback_last_messages(self._net, self._dict)
     self._db.callback_clear_log()
 
     self._db.get_logger.info('FILO BLU Service: STARTING UP')

@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
+import re
 import time
+import string
 import threading
+import unicodedata
+import numpy as np
 from functools import wraps
 
 __package__ = 'Filo Blu miscellaneous'
@@ -62,4 +66,86 @@ def repeat_interval(interval_seconds):
 
   return decorator
 
+def read_dictionary(dict_file):
+  """
+  Read dictionary of words from file.
+  The dictionary file must be sorted by frequency of words in ascending order.
+  The file must be formatted as:
 
+  word1 freq1
+  word2 freq2
+
+  with space as separator
+  """
+  words = {}
+  with open(dict_file, 'r', encoding='utf-8') as fp:
+    for line in fp:
+      w, i = line.split(' ')
+      words[w] = int(i)
+  return words
+
+def preprocess(msg, dictionary):
+  """
+  Pipeline for text pre-processing.
+  The text message is converted in lower case and the punctuations are removed.
+  The accents letters are replaced by the "normal" form (ex. à -> a) and the text is splitted in single words.
+  The words are replaced by their frequency stored in the dictionary; the words outside the dictionary
+  have 0 frequency.
+
+  -------------
+
+  Variables
+    msg: string - the text message to pre-process
+    dictionary: dict - dictionary of frequency words in which keys are words and values are integer of the freq order
+
+  Return
+    outvect: np.array(type=int) - the position of each word in the dictionary
+  """
+
+
+  # convert to lower
+  msg = msg.lower()
+  # remove punctuation
+  msg = re.sub('['+string.punctuation+']', ' ', msg)
+  msg.replace('\t', ' ').replace('\n', ' ').replace('\\', ' ')
+
+  # replace accents
+  nfkd_form = unicodedata.normalize('NFKD', msg)
+  msg = u''.join([c for c in nfkd_form if not unicodedata.combining(c)])
+
+  # split in words
+  words = [i for i in msg.split(' ') if i != '']
+
+  converted = []
+  for word in words:
+    if word in dictionary:
+      tmp_idx = dictionary[word]
+    elif word[:-1] in dictionary:
+      tmp_idx = dictionary[word[:-1]]
+    else:
+      tmp_idx = 0
+
+    converted.append(tmp_idx)
+
+  outvect = np.asarray(converted).astype('i4')
+  return outvect
+
+
+def vectorize_sequence(seq, dim):
+  """
+  Convert matrix of words pre-processed by the preprocess function in a matrix of one-hot encoding of the dictionary
+
+  -----------
+
+  Variables
+    seq: np.array(ndim=2, dtype=int) - matrix of the full set of messages pre-processed
+    dim: int - dimension of the dictionary file
+
+  Return
+    results: np.array(ndim=2, dtype=float) - one-hot encoding of the messages
+  """
+
+  results = np.zeros(shape=(len(seq), dim), dtype=float)
+  for i, s in enumerate(seq):
+    results[i, s] = 1.
+  return results
