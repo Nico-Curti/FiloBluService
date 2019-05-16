@@ -127,7 +127,7 @@ class FiloBluDB(object):
 
       self.log_error(e)
 
-
+  @repeat_interval(1)
   def callback_process_messages(self, network, dictionary):
     """
     Callback function.
