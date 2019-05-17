@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import os
 import json
+import glob
 import logging
 import operator
 import mysql.connector
@@ -34,6 +36,8 @@ class FiloBluDB(object):
       - logfile : string - log filename in which the stdout and stderr are dumped.
     """
 
+    self._wait = False
+
     self._logfilename = logfile
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
@@ -62,7 +66,7 @@ class FiloBluDB(object):
       self._key_id = map(operator.itemgetter(0), self._cursor)
       self._data = {k : [] for k in self._key_id} # I don't know why but without you the program crash
       self._queue = Queue(maxsize=self.MAX_SIZE_QUEUE)
-      self._score = []
+      self._score = Queue(maxsize=self.MAX_SIZE_QUEUE)
 
     except Exception as e:
 
@@ -107,29 +111,32 @@ class FiloBluDB(object):
     the query for the time in the db (see the comments below).
     """
 
-    self._logger.info('Calling Callback message')
+    if not self._wait:
 
-    try:
+      self._logger.info('Calling Callback message')
 
-      now = datetime.now()
-      ########## pay attention to modify this line if you change the repeat interval!!!!
-      timer = now - timedelta(seconds=2)
+      try:
 
-      #self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}"'.format(now, timer))
-      self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}"'.format(now)) # FOR DEBUG
-      records = self._cursor.fetchall()
+        now = datetime.now()
+        ########## pay attention to modify this line if you change the repeat interval!!!!
+        timer = now - timedelta(seconds=2)
 
-      if records:
-        self._logger.info('Found {} messages to process'.format(len(records)))
-        self._queue.put([rec[3] for rec in records]) # tex message
-        #for rec in records:
-        #  for r, k in zip(rec, self._key_id):
-        #    self._data[k].append(r)
+        self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}"'.format(now, timer))
+        #self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}"'.format(now)) # FOR DEBUG
+        records = self._cursor.fetchall()
 
-    except Exception as e:
+        if records:
+          self._logger.info('Found {} messages to process'.format(len(records)))
+          self._queue.put([rec[3] for rec in records]) # tex message
+          #for rec in records:
+          #  for r, k in zip(rec, self._key_id):
+          #    self._data[k].append(r)
 
-      self.log_error(e)
+      except Exception as e:
 
+        self.log_error(e)
+
+  # try to process coming messages every second
   @repeat_interval(1)
   def callback_process_messages(self, network, dictionary):
     """
@@ -137,22 +144,31 @@ class FiloBluDB(object):
     This function evaluate the message stored in the self.data variable
 
     The function is called every second.
+
+    -----------
+
+    Variables
+      network: object - the neural network object (as tensorflow model)
+      dictionary: dict - the work dictionary in which keys are words and value are integer (order freq)
     """
 
-    self._logger.info('Calling Callback process message')
+    if not self._wait:
 
-    try:
+      self._logger.info('Calling Callback process message')
 
-      if self._data:
+      try:
 
-        # Tensorflow does not work in thread!!! BUG
-        #self._score = [42]
-        self._score += network.predict(self._queue.get(), dictionary)
+        if not self._queue.empty():
 
-    except Exception as e:
+          # Tensorflow does not work in thread!!! BUG
+          #self._score = [42]
+          self._score.put( network.predict(self._queue.get(), dictionary) )
 
-      self.log_error(e)
+      except Exception as e:
 
+        self.log_error(e)
+
+  # try to write score values every seconds
   @repeat_interval(1)
   def callback_write_score_messages(self):
     """
@@ -162,18 +178,60 @@ class FiloBluDB(object):
     The function is called every second.
     """
 
-    self._logger.info('Calling Callback write message')
+    if not self._wait:
+
+      self._logger.info('Calling Callback write message')
+
+      try:
+
+        if not self._score.empty():
+          self._logger.info('Score last messages: {}'.format(self._score.get()))
+
+      except Exception as e:
+
+        self.log_error(e)
+
+
+  # check new weights model every day
+  @repeat_interval(24 * 60 * 60)
+  def callback_load_new_weights(self, current_weight_file, update_directory):
+    """
+    Callback function.
+    This callback check if a new neural network model is in the update_directory.
+    The update model must be a file with .upd extension and it must be put in the
+    update_directory (just a single file!!).
+    The callback move the update file into the older one and set a wait variable to
+    "stop" the other thread execution until the main service not reload the network
+    model.
+
+    ---------
+
+    Variables
+      - current_weight_file: string - the filename of the current weight file loaded by the network
+      - update_directory: string - the directory in which the update files are located.
+    """
+
+    self.logger.info('Calling Callback read new model')
 
     try:
 
-      if self._score:
-        self._logger.info('Score last messages: {}'.format(self._score))
-        self._score = []
+      update_files = glob.glob(os.path.join(os.path.abspath(update_directory), '*.upd'))
+
+      if len(update_files) > 1:
+
+        self.log_error('Error Callback read new model. Found more than one update file')
+
+      else:
+
+        update_files = update_files[0]
+        # move the new file
+        os.rename(update_files, current_weight_file)
+
+        self._wait = True
 
     except Exception as e:
 
       self.log_error(e)
-
 
   # clear log every day
   @repeat_interval(24 * 60 * 60)

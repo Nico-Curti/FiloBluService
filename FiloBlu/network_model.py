@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from __future__ import division, print_function
 
 import tensorflow as tf
-import keras.backend as K
 from keras.models import Model
 from keras.layers import Input, Dense, Activation
+import numpy as np
 
 from misc import preprocess, vectorize_sequence
 

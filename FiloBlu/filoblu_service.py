@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import os
 import sys
@@ -6,6 +7,7 @@ import time
 import win32event
 import win32service
 import win32serviceutil
+
 from database import FiloBluDB
 from misc import read_dictionary
 from network_model import NetworkModel
@@ -21,7 +23,7 @@ DICTIONARY = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data
 MODEL = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.h5'))
 CONFIGFILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'config.json'))
 LOGFILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'logs', 'filo_blu_service.log'))
-
+UPDATE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'updates'))
 
 class FiloBluService (win32serviceutil.ServiceFramework):
   """
@@ -131,6 +133,7 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     time.sleep(.5)
     self._db.callback_write_score_messages()
 
+    self._db.callback_load_new_weights(MODEL, UPDATE_DIR)
     self._db.callback_clear_log()
 
     self._db.get_logger.info('FILO BLU Service: STARTING UP')
@@ -138,7 +141,12 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     rc = None
     # if the stop event hasn't been fired keep looping
     while rc != win32event.WAIT_OBJECT_0:
-      rc = win32event.WaitForSingleObject(self.hWaitStop, 990)
+
+      if self._db._wait:
+        self._net = NetworkModel(MODEL)
+        self._db._wait = False
+
+      rc = win32event.WaitForSingleObject(self.hWaitStop, 10)
 
     self._db.get_logger.info('FILO BLU Service: SHUTDOWN')
 
@@ -261,6 +269,7 @@ if __name__ == '__main__':
   # Create the logs directory if it does not exist.
   log_directory = os.path.dirname(LOGFILE)
   os.makedirs(log_directory, exist_ok=True)
+  os.makedirs(UPDATE_DIR, exist_ok=True)
 
   # run the service
   win32serviceutil.HandleCommandLine(FiloBluService)
