@@ -121,8 +121,8 @@ class FiloBluDB(object):
         ########## pay attention to modify this line if you change the repeat interval!!!!
         timer = now - timedelta(seconds=2)
 
-        #self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}"'.format(now, timer))
-        self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}"'.format(now)) # FOR DEBUG
+        self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}"'.format(now, timer))
+        #self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}"'.format(now)) # FOR DEBUG
         records = self._cursor.fetchall()
 
         if records:
