@@ -9,8 +9,6 @@ import win32service
 import win32serviceutil
 
 from database import FiloBluDB
-from misc import read_dictionary
-from network_model import NetworkModel
 
 __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
@@ -67,6 +65,8 @@ class FiloBluService (win32serviceutil.ServiceFramework):
 
     try:
 
+      from network_model import NetworkModel
+
       self._net = NetworkModel(MODEL)
       self._db.get_logger.info('MODEL LOADED')
 
@@ -77,6 +77,8 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     self._db.get_logger.info('LOADING WORD DICTIONARY...')
 
     try:
+
+      from misc import read_dictionary
 
       self._dict = read_dictionary(DICTIONARY)
       self._db.get_logger.info('DICTIONARY LOADED')
@@ -102,6 +104,7 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
     # fire the stop event
     win32event.SetEvent(self.hWaitStop)
+    exit(0)
 
 
   def SvcDoRun(self):
@@ -272,4 +275,14 @@ if __name__ == '__main__':
   os.makedirs(UPDATE_DIR, exist_ok=True)
 
   # run the service
-  win32serviceutil.HandleCommandLine(FiloBluService)
+  if len(sys.argv) == 1:
+
+    import servicemanager
+
+    servicemanager.Initialize()
+    servicemanager.PrepareToHostSingle(FiloBluService)
+    servicemanager.StartServiceCtrlDispatcher()
+
+  else:
+
+    win32serviceutil.HandleCommandLine(FiloBluService)

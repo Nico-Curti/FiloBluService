@@ -40,7 +40,6 @@ class NetworkModel(object):
     NNet Architecture
     """
 
-    # sequential (aka Feed-Forward Convolutional Neural Network) (functional approach)
     Input_txt = Input(shape=(self.MAX_WORDS,), name='input_txt')
 
     # dense_1
