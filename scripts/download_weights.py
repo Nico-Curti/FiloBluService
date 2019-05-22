@@ -14,7 +14,7 @@ __package__ = 'Download Neural Network weights file'
 __author__  = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
 
-def download_file_from_google_drive(Id, destination, total_length = 801847):
+def download_file_from_google_drive(Id, destination, total_length = 776425):
 
   url = 'https://docs.google.com/uc?export=download'
 
@@ -57,7 +57,7 @@ def download_file_from_google_drive(Id, destination, total_length = 801847):
 
 def get_weights(Id):
 
-  size = 801847
+  size = 776425
   file = 'filoblu_data'
   print ('Download {0} file...'.format(file))
   download_file_from_google_drive(Id, './{}.zip'.format(file.lower()), size)
@@ -82,7 +82,7 @@ def get_weights(Id):
   except:
     os.makedirs(os.path.join(here, '../data'))
 
-  os.rename('./SAna_DNN_trained_0_weights.h5'.format(file.lower()), os.path.join(here, '../data/SAna_DNN_trained_0_weights.h5'.format(file.lower())) )
+  os.rename('./SAna_DNN_trained_0_weights.pkl'.format(file.lower()), os.path.join(here, '../data/SAna_DNN_trained_0_weights.pkl'.format(file.lower())) )
   os.rename('./DB_parole_filter.dat'.format(file.lower()), os.path.join(here, '../data/DB_parole_filter.dat'.format(file.lower())) )
 
   os.remove('./{}.zip'.format(file.lower()))

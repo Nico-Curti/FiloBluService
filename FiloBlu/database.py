@@ -332,7 +332,7 @@ if __name__ == '__main__':
 
   logfile = os.path.join(log_directory, 'filo_blu_service.log')
   dictionary = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat'))
-  model = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.h5'))
+  model = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.pkl'))
 
   filoblu = FiloBluDB(config_file, logfile)
 

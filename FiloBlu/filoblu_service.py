@@ -18,7 +18,7 @@ __package__ = 'Filo Blu Service'
 # global variables that must be set and used in the following class
 # The paths are relative to the current python file
 DICTIONARY = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat'))
-MODEL = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.h5'))
+MODEL = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.pkl'))
 CONFIGFILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'config.json'))
 LOGFILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'logs', 'filo_blu_service.log'))
 UPDATE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'updates'))
@@ -65,7 +65,7 @@ class FiloBluService (win32serviceutil.ServiceFramework):
 
     try:
 
-      from network_model import NetworkModel
+      from network_model_np import NetworkModel
 
       self._net = NetworkModel(MODEL)
       self._db.get_logger.info('MODEL LOADED')
