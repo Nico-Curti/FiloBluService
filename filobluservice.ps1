@@ -31,9 +31,9 @@ else
     Push-Location > $null
     Set-Location $path_to_filoblu_service_file
     New-Item -Path ..\logs -ItemType directory -Force -ErrorAction SilentlyContinue > $null
-    python .\filoblu_service.py install
-    python .\filoblu_service.py update
-    python .\filoblu_service.py start
+    python .\filoblu_service_np.py install
+    python .\filoblu_service_np.py update
+    python .\filoblu_service_np.py start
     Pop-Location > $null
   }
   elseif ( $service.Status -eq "Stopped" )
@@ -42,8 +42,8 @@ else
     Push-Location > $null
     Set-Location $path_to_filoblu_service_file
     New-Item -Path ..\logs -ItemType directory -Force -ErrorAction SilentlyContinue > $null
-    python .\filoblu_service.py update
-    python .\filoblu_service.py start
+    python .\filoblu_service_np.py update
+    python .\filoblu_service_np.py start
     Pop-Location > $null
   }
   elseif ( $service.Status -eq "Running" )
@@ -54,7 +54,7 @@ else
       Push-Location > $null
       Set-Location $path_to_filoblu_service_file
       New-Item -Path ..\logs -ItemType directory -Force -ErrorAction SilentlyContinue > $null
-      python .\filoblu_service.py stop
+      python .\filoblu_service_np.py stop
       Pop-Location > $null
     }
     else
@@ -63,9 +63,9 @@ else
       Push-Location > $null
       Set-Location $path_to_filoblu_service_file
       New-Item -Path ..\logs -ItemType directory -Force -ErrorAction SilentlyContinue > $null
-      python .\filoblu_service.py stop
-      python .\filoblu_service.py update
-      python .\filoblu_service.py start
+      python .\filoblu_service_np.py stop
+      python .\filoblu_service_np.py update
+      python .\filoblu_service_np.py start
       Pop-Location > $null
     }
   }

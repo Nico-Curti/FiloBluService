@@ -2,5 +2,9 @@ setup.py
 FiloBlu/__init__.py
 FiloBlu/__version__.py
 FiloBlu/database.py
-FiloBlu/filoblu_service.py
+FiloBlu/filoblu_service_np.py
+FiloBlu/filoblu_service_tf.py
 FiloBlu/misc.py
+FiloBlu/network_model_np.py
+FiloBlu/network_model_tf.py
+FiloBlu/process.py

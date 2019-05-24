@@ -2,7 +2,7 @@
 
 # Import all the objects in the package
 
-from filoblu_service import FiloBluService
+from filoblu_service_np import FiloBluService
 from database import FiloBluDB
 from misc import add_method, repeat_interval, read_dictionary, preprocess, vectorize_sequence
 from network_model_np import NetworkModel

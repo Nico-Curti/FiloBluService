@@ -3,7 +3,11 @@
 
 from __future__ import division, print_function
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
+tf.logging.set_verbosity(tf.logging.ERROR)
+
 from keras.models import Model
 from keras.layers import Input, Dense, Activation
 import numpy as np

@@ -1,6 +1,6 @@
 mysql>=0.0.2
 mysql-connector>=2.1.6
 pywin32
-numpy>=1.16.1
+numpy>=1.16.2
 tensorflow>=1.13.1
 keras>=2.2.4

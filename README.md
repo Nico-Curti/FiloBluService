@@ -74,9 +74,9 @@ First of all follow the Prerequisites instructions.
 Then you can just use the `filobluservice.ps1` script or run inside the project folder the following commands with an Administrator Powershell:
 
 ```
-python FiloBlu\filobluservice.py install
-python FiloBlu\filobluservice.py update
-python FiloBlu\filobluservice.py start
+python FiloBlu\filobluservice_np.py install
+python FiloBlu\filobluservice_np.py update
+python FiloBlu\filobluservice_np.py start
 ```
 
 By default each 2 seconds the script provides a query to DB and processes the text messages founded and assign to a score value to each (a pair of values where the first is the floating-point result and the second one is its integer value in [0, 4) ).
