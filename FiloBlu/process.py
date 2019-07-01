@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import os
 import time
@@ -89,6 +90,12 @@ def parse_args():
 
 
 if __name__ == '__main__':
+
+  """
+  This main represent the tensorflow process service called by 'filoblu_service_tf.py' and it
+  perform the right sequence of calls that can be found also in the 'filoblu_service_np.py' script
+  in the main loop of the service object.
+  """
 
   args = parse_args()
 

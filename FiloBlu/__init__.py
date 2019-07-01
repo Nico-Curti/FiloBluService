@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # Import all the objects in the package
 
@@ -11,4 +12,4 @@ __all__ = ['FiloBluService']
 
 __package__ = 'FiloBluService'
 __author__  = ['Nico Curti', 'Andrea Ciardiello', 'Stefano Giagu']
-__email__ = ['andrea.ciardiello@gmail.com', 'stefano.giagu@roma1.infn.it', 'nico.curti2@unibo.it']
+__email__ = ['nico.curti2@unibo.it', 'andrea.ciardiello@gmail.com', 'stefano.giagu@roma1.infn.it']

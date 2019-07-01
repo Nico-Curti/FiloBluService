@@ -16,28 +16,29 @@ __email__ = 'nico.curti2@unibo.it'
 __package__ = 'Filo Blu Service'
 
 
+# Service log file ( different for process logfile!! )
 LOGFILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'logs', 'filo_blu_process_service.log'))
 
 PROCESS_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), 'process.py'))
-PYTHON_INTERPRETER = 'python'
+PYTHON_INTERPRETER = 'python' # or python3
 
 class FiloBluService (win32serviceutil.ServiceFramework):
   """
   FiloBluService class object (inheritance from win32serviceutil)
 
   The class implements a Windows service called 'FiloBluService' (name that can be found in Task Manager
-  after the install of the service).
+  after the service installation).
   The service can be enabled running the current file with the 'install' command line parameter.
   Please make sure to 'update' the service after each editing.
 
   The constructor of the object has also a FiloBluDB member object to allow the connection to the central
   database (the FiloBluDB object class can be found in the 'database.py' file).
 
-  The logfile and the configfile used in the constructor must be global variables (see the default variables
-  at the beginning of the current file).
+  The service starts calling a Popen process since the tensorflow architecture can not run as a service
+  in windows applications.
+  The processing pipeline is the re-started if something goes wrong in the code.
+  In this way there is a second layer of safety to prevent errors/problems.
 
-  The service start calling a time-dependent series of function (public members of FiloBluDB object) as
-  independet threads.
   Then the main loop begins until the 'stop' command of the service is given.
   """
 
@@ -53,7 +54,6 @@ class FiloBluService (win32serviceutil.ServiceFramework):
   def __init__(self, args):
     """
     FiloBluService constructor.
-    The variable CONFIGFILE and LOGFILE must be global variables!
     The 'args' variable is used to start/stop/update/install the service and it must be the
     first sys.argv variable.
     """
@@ -81,7 +81,7 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     FiloBluService stop function.
     It just stop the service and return.
     To call this function the current python script must be run as 'python filoblu_service.py stop'.
-    There are not other alternatives up to now.
+    There are no other alternatives up to now.
     """
 
     # tell the SCM we're shutting down
@@ -96,22 +96,16 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     FiloBluService run function.
     This function is called after the 'start' command (python filoblu_service.py start) and must be called
     after the installation of the service (python filoblu_service.py install).
-    Do not try to call this function explicitally because it is automatically run after the 'start'.
+    Do not try to call this function explicitly because it is automatically run after the 'start'.
 
-    Before the main loop of the service (while rc != win32event.WAIT_OBJECT_0) a series of timer-function
-    are called.
-    The function are public members of the FiloBluDB member object and are all decorated with a time_interval
-    function (see misc.py for the decorators implementation).
-    This function spawn a thread for each one and the function is asynchronously called at each time interval
-    set in the function definition (see database.py for the functions implementation).
+    The main loop starts with the check of previous exit code (initially set to None) and if there were problems it
+    renames the previous log file with the Unix time to prevent the remotion and it re-start the processing service.
 
-    The 'callback_last_messages' make a query to the central db and it processes the last messages found in
-    the time interval with the neural network framework; then it re-write the results in the db.
-    The time interval of this function must be set according to the execution time of the processing step and
-    to the application needs.
+    For the first run the process service is just started ignoring boring warnings and giving to the script the
+    right logfile name.
 
-    The 'callback_clear_log' clear the log file to a better memory management.
-    This second callback must be called with a larger time interval (example each day).
+    The service run until some drastically errors occur to the current python script/service
+
     """
 
     self._logger.info('FILO BLU Service: STARTING UP')

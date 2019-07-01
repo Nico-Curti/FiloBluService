@@ -16,6 +16,16 @@ __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
 __package__ = 'Filo Blu Database connector'
 
+# the following variables are measured in seconds !!!
+
+DT_READ_DB = 20
+DT_PROCESS_MESSAGE = 25
+DT_WRITE_SCORE_MESSAGES = 30
+DT_LOAD_NEW_WEIGHTS = 24 * 60 * 60 # one day
+DT_CLEAR_LOG = 24 * 60 * 60 # one day
+
+DT_BIOLOGICAL_SEARCH = 2 # measured in days (confidence interval for query of biological parameters)
+
 class FiloBluDB(object):
 
   MAX_SIZE_QUEUE = 100
@@ -54,7 +64,7 @@ class FiloBluDB(object):
 
     try:
 
-      with open(config, 'r') as fp:
+      with open(config, 'r', encoding='utf-8') as fp:
         config = json.load(fp)
 
       self._db = mysql.connector.connect(
@@ -77,42 +87,21 @@ class FiloBluDB(object):
       self.log_error(e)
 
 
-
-  def execute(self, query):
-    """
-    Test function to execute a simple query without filters.
-    This function is useful for MySQL beginners.
-
-    ---------
-
-    Variables
-      - query : string - text of the query in MySQL fmt.
-
-    Return
-      - list type - the result of the query
-    """
-
-    self._cursor.execute(query)
-    return list(self._cursor)
-
-
-  # read new text message and process them every 2 seconds
-  @repeat_interval(2)
+  @repeat_interval(DT_READ_DB)
   def callback_read_last_messages(self):
     """
     Callback function.
-    This function evaluate the current time and executes a query on the db filtering by the time
+    This function evaluate the current time and it executes a query on the db filtering by the time
     (keyword 'scritto_il').
-    This method is tuned over the FiloBluDB format and the query must be changed if you run on
+    This method is tuned over the FiloBluDB format db and the query must be changed if you run on
     different database.
-    The extracted records are then re-organized inside the 'data' variable and processed by the
+    If some new messages are found the extraction of biological parameters associated to each patient
+    is performed considering a time interval (confidence interval for biological variables update) of 2 days.
+    The extracted records are then re-organized inside the 'text_msg' variable and processed by the
     neural network algorithm to extract the score values.
-    The results are then re-written in the db.
-    # miss score description
+    The variables are stored in a queue array for FIFO management of the data.
 
-    The function is called every 2 seconds.
-    Change the value in the decorator for a different clock time and pay attention to change
-    the query for the time in the db (see the comments below).
+    The function is called every DT_READ_DB seconds.
     """
 
     if not self._wait:
@@ -122,38 +111,54 @@ class FiloBluDB(object):
       try:
 
         now = datetime.now()
-        ########## pay attention to modify this line if you change the repeat interval!!!!
-        timer = now - timedelta(seconds=2)
+        interval_time = now - timedelta(seconds=DT_READ_DB)
 
-        #self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}"'.format(now, timer))
-        self._cursor.execute('SELECT * from messaggi WHERE scritto_il < "{0}"'.format(now)) # FOR DEBUG
-        records = self._cursor.fetchall()
+        self._cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}" AND sa_score = 0'.format(now, interval_time))
+        #self._cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}" AND sa_score = 0'.format(now)) # FOR DEBUG
+        result_query = self._cursor.fetchall()
 
-        if records:
-          self._logger.info('Found {} messages to process'.format(len(records)))
-          self._queue.put([rec[3] for rec in records]) # tex message
-          #for rec in records:
-          #  for r, k in zip(rec, self._key_id):
-          #    self._data[k].append(r)
+        self._logger.info('Found {} messages to process'.format(len(result_query)))
+
+        if result_query:
+
+          patient_msg, text_msg, time_msg = zip(*result_query)
+
+          # looking for biological parameters
+          #two_days_ago  = now - timedelta(days=DT_BIOLOGICAL_SEARCH)
+          self._cursor.execute('SELECT id_paziente, id_parametro_rilevato, valore FROM parametri_rilevati') # insert time filter
+          patient_bio, patient_param, patient_bioval = zip(*self._cursor.fetchall())
+
+          data_to_process = [None] * len(patient_msg)
+
+          for i, patient in enumerate(patient_msg):
+            for j, bio_patient in enumerate(patient_bio):
+              if patient == bio_patient:
+                data_to_process[i] = (text_msg[i], patient_msg[i], patient_param[j], patient_bioval[j], time_msg[i])
+              else:
+                data_to_process[i] = (text_msg[i], patient_msg[i], None,             None,              time_msg[i])
+
+          self._queue.put(data_to_process) # text + biological values
 
       except Exception as e:
 
         self.log_error(e)
 
-  # try to process coming messages every second
-  @repeat_interval(1)
+
+  @repeat_interval(DT_PROCESS_MESSAGE)
   def callback_process_messages(self, network, dictionary):
     """
     Callback function.
-    This function evaluate the message stored in the self.data variable
+    This function evaluate the last inserted data in the queue container.
+    If there are new data to process the pair of (msg, biological params) are given to the NN
+    and the score are stored in an other FIFO containter.
 
-    The function is called every second.
+    The function is called every DT_PROCESS_MESSAGE seconds.
 
     -----------
 
     Variables
-      network: object - the neural network object (as tensorflow model)
-      dictionary: dict - the work dictionary in which keys are words and value are integer (order freq)
+      network: object - the neural network object (as tensorflow model or the numpy one)
+      dictionary: dict - a dictionary in which keys are words and value are integer (freq order)
     """
 
     if not self._wait:
@@ -166,20 +171,31 @@ class FiloBluDB(object):
 
           # Tensorflow does not work in thread!!! BUG
           #self._score = [42]
-          self._score.put( network.predict(self._queue.get(), dictionary) )
+          data_to_process = self._queue.get()
+
+          text_msg, patient_id, bio_par, bio_val, time_msg = zip(*data_to_process)
+
+          score = network.predict(text_msg, bio_par, bio_val, dictionary)
+
+          results_to_write = [(Id, time, s) for s, Id, time in zip(score, patient_id, time_msg)]
+
+          self._score.put(results_to_write)
 
       except Exception as e:
 
         self.log_error(e)
 
-  # try to write score values every seconds
-  @repeat_interval(1)
+
+  @repeat_interval(DT_WRITE_SCORE_MESSAGES)
   def callback_write_score_messages(self):
     """
     Callback function.
-    This function write the scores of messages stored in the self.score variable
+    This function write the last scores of messages + biological parameters stored in the self._score queue.
+    If there are new score variables to write the db is updated following the assumpion of unique keyword
+    identifier given by (patient_id, message_time).
+    If there are possible mismatch change the query and the previous process callback according to the right variables
 
-    The function is called every second.
+    The function is called every DT_WRITE_SCORE_MESSAGES seconds.
     """
 
     if not self._wait:
@@ -189,7 +205,30 @@ class FiloBluDB(object):
       try:
 
         if not self._score.empty():
-          self._logger.info('Score last messages: {}'.format(self._score.get()))
+
+          score = self._score.get()
+
+          for id_paziente, scritto_il, sa_score in score:
+            self._cursor.execute('UPDATE messaggi SET sa_score = {0} WHERE id_paziente = {1} AND scritto_il = "{2}"'.format(sa_score, id_paziente, scritto_il))
+
+          self._db.commit()
+
+          self._logger.info('Score last messages: {}'.format(list(map(operator.itemgetter(2), score))) )
+
+########## THIS IS THE BEST SOLUTION BUT IT DOES NOT WORK BECAUSE COLUMNS HAVE NOT DEFAULT VALUES!!!
+#          try:
+#            self._cursor.executemany('INSERT INTO messaggi (id_account, id_paziente, scritto_il, sa_score) VALUES (0, %s, %s, %s) ON DUPLICATE KEY UPDATE id_paziente=VALUES(id_paziente), scritto_il=VALUES(scritto_il)',
+#                                     score)
+#            self._db.commit()
+#
+#            self._logger.info(self._cursor.rowcount, 'Record inserted successfully into "messaggi" table')
+#
+#            self._logger.info('Score last messages: {}'.format(list(map(operator.itemgetter(2), score))) )
+#
+#          except mysql.connector.Error as e:
+#
+#            self._db.rollback()
+#            self.log_error('Failed to insert into MySQL table {}'.format(e))
 
       except Exception as e:
 
@@ -197,22 +236,22 @@ class FiloBluDB(object):
 
 
   # check new weights model every day
-  @repeat_interval(24 * 60 * 60)
+  @repeat_interval(DT_LOAD_NEW_WEIGHTS)
   def callback_load_new_weights(self, current_weight_file, update_directory):
     """
     Callback function.
-    This callback check if a new neural network model is in the update_directory.
-    The update model must be a file with .upd extension and it must be put in the
+    This callback check if there is a new neural network model in the update_directory.
+    The updated model must be a file with .upd extension and it must be put in the
     update_directory (just a single file!!).
-    The callback move the update file into the older one and set a wait variable to
-    "stop" the other thread execution until the main service not reload the network
+    The callback moves the update_file into the older one and set a wait variable to
+    "stop" the other threads execution until the main service does not reload the network
     model.
 
     ---------
 
     Variables
       - current_weight_file: string - the filename of the current weight file loaded by the network
-      - update_directory: string - the directory in which the update files are located.
+      - update_directory: string - the directory in which the update_files are located.
     """
 
     self.logger.info('Calling Callback read new model')
@@ -237,18 +276,16 @@ class FiloBluDB(object):
 
       self.log_error(e)
 
-  # clear log every day
-  @repeat_interval(24 * 60 * 60)
+
+  @repeat_interval(DT_CLEAR_LOG)
   def callback_clear_log(self):
     """
     Callback function.
     This function clear the current log file and restart the logging on the same file.
     If an error occurs an error message is written in the current logfile and the file
     is saved with the current time (UNIX) in the name.
-    The service is stopped if an error occures (this option can be deleted removing the exit at the
-    end of the exception catch).
 
-    The function is called every day (24 hours * 60 minutes * 60 seconds).
+    The function is called every DT_CLEAR_LOG seconds.
     Change the value in the decorator for a different clock time.
     """
 
@@ -272,7 +309,7 @@ class FiloBluDB(object):
 
   def log_error(self, exception):
     """
-    Write exception in logfile and exit.
+    Write exception in the logfile.
     The logfile with the error is rename with the UNIX time to prevent clear log callback
     """
     self._logger.error(exception)
@@ -285,6 +322,11 @@ class FiloBluDB(object):
     """
     Class member to obtain the logger variable.
     It can be used to extract the logger outside the class functions.
+
+    ---------
+
+    Return
+      - logger type - the private logger member.
     """
     return self._logger
 
@@ -327,7 +369,7 @@ if __name__ == '__main__':
   import time
 
   from misc import read_dictionary
-  from network_model import NetworkModel
+  from network_model_np import NetworkModel
 
   config_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'config.json')
 
@@ -347,5 +389,5 @@ if __name__ == '__main__':
   filoblu.callback_process_messages(network, dictionary)
   filoblu.callback_write_score_messages()
 
-  time.sleep(10)
+  time.sleep(100)
 

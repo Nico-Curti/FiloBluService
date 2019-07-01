@@ -28,17 +28,14 @@ class FiloBluService (win32serviceutil.ServiceFramework):
   FiloBluService class object (inheritance from win32serviceutil)
 
   The class implements a Windows service called 'FiloBluService' (name that can be found in Task Manager
-  after the install of the service).
+  after the service installation).
   The service can be enabled running the current file with the 'install' command line parameter.
   Please make sure to 'update' the service after each editing.
 
   The constructor of the object has also a FiloBluDB member object to allow the connection to the central
   database (the FiloBluDB object class can be found in the 'database.py' file).
 
-  The logfile and the configfile used in the constructor must be global variables (see the default variables
-  at the beginning of the current file).
-
-  The service start calling a time-dependent series of function (public members of FiloBluDB object) as
+  The services start calling a time-dependent series of functions (public members of FiloBluDB object) as
   independet threads.
   Then the main loop begins until the 'stop' command of the service is given.
   """
@@ -55,10 +52,11 @@ class FiloBluService (win32serviceutil.ServiceFramework):
   def __init__(self, args):
     """
     FiloBluService constructor.
-    The variable CONFIGFILE and LOGFILE must be global variables!
     The 'args' variable is used to start/stop/update/install the service and it must be the
     first sys.argv variable.
     """
+
+    # Create the Database object from the configfile and the logfile
     self._db = FiloBluDB(CONFIGFILE, LOGFILE)
 
     self._db.get_logger.info('LOADING PROCESSING MODEL...')
@@ -66,6 +64,8 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     try:
 
       from network_model_np import NetworkModel
+
+      # Load the network model only one time!!
 
       self._net = NetworkModel(MODEL)
       self._db.get_logger.info('MODEL LOADED')
@@ -79,6 +79,8 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     try:
 
       from misc import read_dictionary
+
+      # Load the dictionary only one time!!
 
       self._dict = read_dictionary(DICTIONARY)
       self._db.get_logger.info('DICTIONARY LOADED')
@@ -97,7 +99,7 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     FiloBluService stop function.
     It just stop the service and return.
     To call this function the current python script must be run as 'python filoblu_service.py stop'.
-    There are not other alternatives up to now.
+    There are no other alternatives up to now.
     """
 
     # tell the SCM we're shutting down
@@ -112,20 +114,23 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     FiloBluService run function.
     This function is called after the 'start' command (python filoblu_service.py start) and must be called
     after the installation of the service (python filoblu_service.py install).
-    Do not try to call this function explicitally because it is automatically run after the 'start'.
+    Do not try to call this function explicitly because it is automatically run after the 'start'.
 
     Before the main loop of the service (while rc != win32event.WAIT_OBJECT_0) a series of timer-function
     are called.
     The function are public members of the FiloBluDB member object and are all decorated with a time_interval
     function (see misc.py for the decorators implementation).
-    This function spawn a thread for each one and the function is asynchronously called at each time interval
+    This function spawns a thread for each one and the functions are asynchronously called at each time interval
     set in the function definition (see database.py for the functions implementation).
 
-    The 'callback_last_messages' make a query to the central db and it processes the last messages found in
-    the time interval with the neural network framework; then it re-write the results in the db.
+    The 'callback_read_last_messages' make a query to the central db and it processes the last messages found in
+    the time interval.
+    The read data are then processed by the neural network framework in the 'callback_process_messages' function;
+    finaaly the scores are written in the db by the 'callback_write_score_messages'.
     The time interval of this function must be set according to the execution time of the processing step and
     to the application needs.
 
+    The 'callback_load_new_weights' looks for an update-model-file in a hard coded directory.
     The 'callback_clear_log' clear the log file to a better memory management.
     This second callback must be called with a larger time interval (example each day).
     """

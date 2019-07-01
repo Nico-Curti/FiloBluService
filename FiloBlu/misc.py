@@ -16,7 +16,7 @@ __email__ = 'nico.curti2@unibo.it'
 # Source: https://medium.com/@mgarod/dynamically-add-a-method-to-a-class-in-python-c49204b85bd6
 def add_method(cls):
   """
-  This function create a very useful decorator to add an external and "new" function
+  This function creates a very useful decorator to add an external and "new" function
   to an existing class type (cls variable).
 
   --------
@@ -89,7 +89,7 @@ def preprocess(msg, dictionary):
   """
   Pipeline for text pre-processing.
   The text message is converted in lower case and the punctuations are removed.
-  The accents letters are replaced by the "normal" form (ex. à -> a) and the text is splitted in single words.
+  The accents letters are replaced by their "normal" form (ex. a (with accent) -> a) and the text is splitted in single words.
   The words are replaced by their frequency stored in the dictionary; the words outside the dictionary
   have 0 frequency.
 

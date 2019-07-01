@@ -67,6 +67,16 @@ class Dense(object):
     return '{} (Dense)'.format(self._name)
 
 
+class Concatenate(object):
+
+  def __init__(self, layers, axis=1):
+    self.idx_layer_1, self.idx_layer_2 = layers
+    self.axis = axis
+
+  def predict(self, input_array):
+    return np.concatenate()
+
+
 
 class Input(object):
 
@@ -150,6 +160,7 @@ class NetworkModel(object):
     return net
 
   def summary(self):
+
     separator = '_________________________________________________________________'
     header = '\n'.join([ separator,
                          'Layer (type)                 Output Shape              Param #   ',
@@ -188,7 +199,8 @@ class NetworkModel(object):
     return score
 
 
-  def predict(self, text_list, dictionary):
+  def predict(self, text_list, bio_param, bio_val, dictionary):
+
     # pre-process data
     msgs = [preprocess(line, dictionary) for line in text_list]
 
@@ -196,13 +208,18 @@ class NetworkModel(object):
     #msgs = np.asarray(msgs)
     #msgs = [ [w for w in x if w <= MAX_WORDS] for x in msgs ]
 
-    data = vectorize_sequence(msgs, dim=len(dictionary))
+    text_data = vectorize_sequence(msgs, dim=len(dictionary))
 
     # predict the whole list
 
-    y_pred = self._predict(data)
+    y_pred = self._predict(text_data) # miss biological parameter pre-processed
 
-    return y_pred
+    # binning the value between [1, 4]
+
+    bins = [0., .25, .5, .75, 1.]
+    y_pred = np.digitize(y_pred, bins)
+
+    return list(map(int, y_pred))
 
 
 if __name__ == '__main__':
@@ -217,8 +234,11 @@ if __name__ == '__main__':
 
   print(nnet.summary())
 
-  ilist = ['buongiorno dottore oggi ho la febbre alta e un fortissimo dolore al rene da una settimana',
-           'ciao e tanti auguri di buon natale a lei e famiglia']
+  ilist = [
+           ['buongiorno dottore oggi ho la febbre alta e un fortissimo dolore al rene da una settimana',
+           'ciao e tanti auguri di buon natale a lei e famiglia'],
+           None, None, None
+           ]
 
   dictionary = read_dictionary(dictionary_file)
 

@@ -23,7 +23,7 @@ __package__ = 'Filo Blu Neural Network Model'
 
 class NetworkModel(object):
 
-  # batch size (number of traingin events after each weight update)
+  # batch size (number of training events after each weight update)
   BATCH_SIZE = 512
 
   MAX_WORDS = 12000 # max number of words
@@ -69,20 +69,23 @@ class NetworkModel(object):
 
 
 
-  def predict(self, text_list, dictionary):
+  def predict(self, text_list, bio_param, bio_val, dictionary):
+
     # pre-process data
     msgs = [preprocess(line, dictionary) for line in text_list]
 
     # Uncomment these lines if you are using a different dictionary
-    #msgs = np.asarray(msgs)
-    #msgs = [ [w for w in x if w <= MAX_WORDS] for x in msgs ]
+    # msgs = np.asarray(msgs)
+    # msgs = [ [w for w in x if w <= MAX_WORDS] for x in msgs ]
 
-    data = vectorize_sequence(msgs, dim=len(dictionary))
+    text_data = vectorize_sequence(msgs, dim=len(dictionary))
 
-    # predict the whole list
+    # predict the whole list + biological parameters
     with DEFAULT_GRAPH.as_default():
-      y_pred = self.net.predict(data, batch_size=self.BATCH_SIZE)
-    return y_pred.ravel().tolist()
+
+      y_pred = self.net.predict(text_data, batch_size=self.BATCH_SIZE)
+
+    return list(map(int, y_pred.ravel()))
 
 
 if __name__ == '__main__':
@@ -96,8 +99,11 @@ if __name__ == '__main__':
   nnet = NetworkModel(weightfile)
   print(nnet.summary())
 
-  ilist = ['buongiorno dottore oggi ho la febbre alta e un fortissimo dolore al rene da una settimana',
-           'ciao e tanti auguri di buon natale a lei e famiglia']
+  ilist = [
+           ['buongiorno dottore oggi ho la febbre alta e un fortissimo dolore al rene da una settimana',
+           'ciao e tanti auguri di buon natale a lei e famiglia'],
+           None, None, None
+           ]
 
   dictionary = read_dictionary(dictionary_file)
 

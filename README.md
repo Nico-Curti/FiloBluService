@@ -15,8 +15,7 @@
 # FiloBlu Service manager
 
 This package is part of the FILOBLU project (*Application of machine learning algorithms to physician-patient communications, within the FILOBLU project*) and was developed by the collaboration between the Physics Department of the University of Bologna and the Physics Department of the University of Rome (*Sapienza*) with the support of [BiMind](http://www.bimind.it/it/) company.
-The module implements a windows service application for the processing of medical text messages stored in a central DB and gives a score/importance value to provide a possible reading order to the doctors.
-The score attribution is made by a pre-trained neural network.
+The module implements a windows service application for the processing of medical text messages and biological parameters stored in a central DB. With a neural network processing a score/importance is given to provide a possible reading order to the doctors.
 
 1. [Prerequisites](#prerequisites)
 2. [Installation](#installation)
@@ -26,7 +25,7 @@ The score attribution is made by a pre-trained neural network.
 
 ## Prerequisites
 
-The package is intended for use only in a Windows environment and it needs the MySQL support for the database management.
+The package is intended for use only on a Windows environment and it needs the MySQL support for the database management.
 Before install the package pay attention to download the whole set of dependencies or just simple run:
 
 ```
@@ -64,7 +63,7 @@ C:\Users\UserName\Anaconda3\Lib\site-packages\win32
 and make sure to run the service with an Administrator Powershell or just use the `filobluservice.ps1` script provided in the project folder changing the `project_folder` variable.
 This script can be also used as StartUp program to refresh and re-enable the service.
 
-In the `scripts` folder a downloader of the neural network weights file is provided.
+In the `scripts` folder a downloader script of the neural network weight file is provided.
 The file can be extracted only with a password: if you are interested in using our pre-trained model, please send an email to one of the [authors](https://github.com/Nico-Curti/FiloBluService/blob/master/AUTHORS.md).
 
 
@@ -79,8 +78,11 @@ python FiloBlu\filobluservice_np.py update
 python FiloBlu\filobluservice_np.py start
 ```
 
-By default each 2 seconds the script provides a query to DB and processes the text messages founded and assign to a score value to each (a pair of values where the first is the floating-point result and the second one is its integer value in [0, 4) ).
+By default each 20 seconds the script provides a query to DB and processes the text messages founded and assign to a score value to each (the floating-point results are converted in a integer value in [1, 4] ).
 These scores are then written in the DB.
+
+The data management is performed by queue container to avoid the lost of records due to the time intervals.
+The service check also for new model updates and in case it restarts automatically the service with the new weights (the file must be set in a precise folder with a `*.upd` extension).
 
 ## Authors
 
