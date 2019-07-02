@@ -65,13 +65,13 @@ class FiloBluDB(object):
     try:
 
       with open(config, 'r', encoding='utf-8') as fp:
-        config = json.load(fp)
+        self.config = json.load(fp)
 
       self._db = mysql.connector.connect(
-                                        host = config['host'],
-                                        user = config['username'],
-                                        passwd = config['password'],
-                                        database = config['database']
+                                        host = self.config['host'],
+                                        user = self.config['username'],
+                                        passwd = self.config['password'],
+                                        database = self.config['database']
                                         )
       self._logger.info ('CONNECTION DB ESTABLISHED')
 
@@ -111,7 +111,15 @@ class FiloBluDB(object):
       try:
 
         now = datetime.now()
-        interval_time = now - timedelta(seconds=DT_READ_DB)
+        interval_time = now - timedelta(seconds=DT_READ_DB * 5)
+
+        self._db = mysql.connector.connect(
+                                            host = self.config['host'],
+                                            user = self.config['username'],
+                                            passwd = self.config['password'],
+                                            database = self.config['database']
+                                          )
+        self._cursor = self._db.cursor()
 
         self._cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}" AND sa_score = 0'.format(now, interval_time))
         #self._cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}" AND sa_score = 0'.format(now)) # FOR DEBUG
