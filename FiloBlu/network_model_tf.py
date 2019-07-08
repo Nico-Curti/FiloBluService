@@ -69,7 +69,7 @@ class NetworkModel(object):
 
 
 
-  def predict(self, text_list, bio_param, bio_val, dictionary):
+  def predict(self, text_list, bio_params, dictionary):
 
     # pre-process data
     msgs = [preprocess(line, dictionary) for line in text_list]

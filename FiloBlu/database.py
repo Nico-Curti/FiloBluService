@@ -8,9 +8,11 @@ import logging
 import operator
 import mysql.connector
 from queue import Queue
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 from misc import repeat_interval
+from radar_plot import radar_plot
 
 __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
@@ -18,13 +20,14 @@ __package__ = 'Filo Blu Database connector'
 
 # the following variables are measured in seconds !!!
 
-DT_READ_DB = 20
-DT_PROCESS_MESSAGE = 25
-DT_WRITE_SCORE_MESSAGES = 30
+DT_READ_DB = 40
+DT_PROCESS_MESSAGE = 50
+DT_WRITE_SCORE_MESSAGES = 60
 DT_LOAD_NEW_WEIGHTS = 24 * 60 * 60 # one day
 DT_CLEAR_LOG = 24 * 60 * 60 # one day
+DT_HISTORY_SCORE = 24 * 60 * 60 * 10 # 10 days
 
-DT_BIOLOGICAL_SEARCH = 2 # measured in days (confidence interval for query of biological parameters)
+DT_BIOLOGICAL_SEARCH = 200 # measured in days (confidence interval for query of biological parameters)
 
 class FiloBluDB(object):
 
@@ -113,6 +116,8 @@ class FiloBluDB(object):
         now = datetime.now()
         interval_time = now - timedelta(seconds=DT_READ_DB * 5)
 
+        # I do not know why but if I do not re-connect to the db the queries are always None
+
         self._db = mysql.connector.connect(
                                             host = self.config['host'],
                                             user = self.config['username'],
@@ -121,8 +126,8 @@ class FiloBluDB(object):
                                           )
         self._cursor = self._db.cursor()
 
-        self._cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}" AND sa_score = 0'.format(now, interval_time))
-        #self._cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}" AND sa_score = 0'.format(now)) # FOR DEBUG
+        #self._cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}" AND sa_score = 0'.format(now, interval_time))
+        self._cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}"'.format(now)) # FOR DEBUG
         result_query = self._cursor.fetchall()
 
         self._logger.info('Found {} messages to process'.format(len(result_query)))
@@ -132,18 +137,33 @@ class FiloBluDB(object):
           patient_msg, text_msg, time_msg = zip(*result_query)
 
           # looking for biological parameters
-          #two_days_ago  = now - timedelta(days=DT_BIOLOGICAL_SEARCH)
-          self._cursor.execute('SELECT id_paziente, id_parametro_rilevato, valore FROM parametri_rilevati') # insert time filter
-          patient_bio, patient_param, patient_bioval = zip(*self._cursor.fetchall())
+          bio_interval_time  = now - timedelta(days=DT_BIOLOGICAL_SEARCH)
+          self._cursor.execute('SELECT parametri_rilevati.id_paziente, parametri_rilevati.valore, parametri.nome \
+                                AS nome_parametro, parametri_rilevati_gruppo.data AS nome_gruppo \
+                                FROM parametri_rilevati JOIN parametri \
+                                ON (parametri_rilevati.id_parametro = parametri.id_parametro) \
+                                JOIN parametri_rilevati_gruppo \
+                                ON (parametri_rilevati.id_parametro_rilevato_gruppo = parametri_rilevati_gruppo.id_parametro_rilevato_gruppo) \
+                                JOIN parametri_gruppi ON (parametri_gruppi.id_gruppo_parametro = parametri_rilevati_gruppo.id_gruppo) \
+                                WHERE parametri_rilevati_gruppo.data <= "{0}" \
+                                AND parametri_rilevati_gruppo.data >= "{1}"'.format(now, bio_interval_time))
+
+          # patient_bio, patient_bioval, patient_param, bio_time = zip(*self._cursor.fetchall())
+
+          result_query = defaultdict(dict)
+          for patient_bio, patient_bioval, patient_param, bio_time in self._cursor.fetchall():
+            result_query[patient_bio][patient_param] = float(patient_bioval)
 
           data_to_process = [None] * len(patient_msg)
 
           for i, patient in enumerate(patient_msg):
-            for j, bio_patient in enumerate(patient_bio):
+            for bio_patient, bio_params in result_query.items():
               if patient == bio_patient:
-                data_to_process[i] = (text_msg[i], patient_msg[i], patient_param[j], patient_bioval[j], time_msg[i])
-              else:
-                data_to_process[i] = (text_msg[i], patient_msg[i], None,             None,              time_msg[i])
+                data_to_process[i] = (text_msg[i], patient_msg[i], bio_params, time_msg[i])
+                break
+
+            if data_to_process[i] is None:
+              data_to_process[i] = (text_msg[i], patient_msg[i], None, time_msg[i])
 
           self._queue.put(data_to_process) # text + biological values
 
@@ -156,7 +176,8 @@ class FiloBluDB(object):
   def callback_process_messages(self, network, dictionary):
     """
     Callback function.
-    This function evaluate the last inserted data in the queue container.
+    This function evaluate the last inserted data in the queue container and
+    it creates the radar plot of biological parameters.
     If there are new data to process the pair of (msg, biological params) are given to the NN
     and the score are stored in an other FIFO containter.
 
@@ -181,9 +202,15 @@ class FiloBluDB(object):
           #self._score = [42]
           data_to_process = self._queue.get()
 
-          text_msg, patient_id, bio_par, bio_val, time_msg = zip(*data_to_process)
+          text_msg, patient_id, bio_params, time_msg = zip(*data_to_process)
 
-          score = network.predict(text_msg, bio_par, bio_val, dictionary)
+          # save radar plot of biological parameters
+
+          radar_plot(bio_params, patient_id)
+
+          # compute the score of the neural network
+
+          score = network.predict(text_msg, bio_params, dictionary)
 
           results_to_write = [(Id, time, s) for s, Id, time in zip(score, patient_id, time_msg)]
 
@@ -315,6 +342,40 @@ class FiloBluDB(object):
       self.log_error(e)
 
 
+  @repeat_interval(DT_HISTORY_SCORE)
+  def callback_score_history_log(self, update_directory):
+    """
+    Callback function.
+    This function dump the score history of the service with the validation values.
+
+    The function is called every DT_HISTORY_SCORE seconds.
+    Change the value in the decorator for a different clock time.
+    """
+
+    self._logger.info('Calling Callback score history log')
+
+    try:
+
+      now = datetime.now()
+
+      self._cursor.execute('SELECT testo, sa_score, sa_valutazione, sa_medico FROM messaggi WHERE scritto_il < "{0}"'.format(now))
+
+      history_score_filename = os.path.join(update_directory, 'FiloBlu_Score_History.csv')
+
+      with open(history_score_filename, 'w', encoding='utf-8') as fp:
+
+        fp.write('text_message,nn_predict_score,validation_score,doctor_id\n')
+
+        for txt, sa_score, sa_val, sa_doc in cursor.fetchall():
+          txt = txt.replace('\n', '').replace('\r', '')
+
+          fp.write(','.join(['"' + txt + '"', str(sa_score), str(sa_val), str(sa_doc)]) + '\n')
+
+    except Exception as e:
+
+      self.log_error(e)
+
+
   def log_error(self, exception):
     """
     Write exception in the logfile.
@@ -384,6 +445,9 @@ if __name__ == '__main__':
   log_directory = os.path.join(os.path.dirname(__file__), '..', 'logs')
   os.makedirs(log_directory, exist_ok=True)
 
+  update_directory = os.path.join(os.path.dirname(__file__), '..', 'updates')
+  os.makedirs(update_directory, exist_ok=True)
+
   logfile = os.path.join(log_directory, 'filo_blu_service.log')
   dictionary = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat'))
   model = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.pkl'))
@@ -394,8 +458,13 @@ if __name__ == '__main__':
   network = NetworkModel(model)
 
   filoblu.callback_read_last_messages()
+  time.sleep(10)
   filoblu.callback_process_messages(network, dictionary)
+  time.sleep(10)
   filoblu.callback_write_score_messages()
+  filoblu.callback_load_new_weights(model, update_directory)
+  filoblu.callback_clear_log()
+  filoblu.callback_score_history_log(update_directory)
 
-  time.sleep(100)
+  time.sleep(300)
 

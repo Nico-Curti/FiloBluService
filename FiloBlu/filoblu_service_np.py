@@ -143,6 +143,7 @@ class FiloBluService (win32serviceutil.ServiceFramework):
 
     self._db.callback_load_new_weights(MODEL, UPDATE_DIR)
     self._db.callback_clear_log()
+    self._db.callback_score_history_log(UPDATE_DIR)
 
     self._db.get_logger.info('FILO BLU Service: STARTING UP')
 
