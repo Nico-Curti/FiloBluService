@@ -153,6 +153,7 @@ class FiloBluDB(object):
           result_query = defaultdict(dict)
           for patient_bio, patient_bioval, patient_param, bio_time in self._cursor.fetchall():
             result_query[patient_bio][patient_param] = float(patient_bioval)
+            result_query[patient_bio]['storage_time'] = bio_time
 
           data_to_process = [None] * len(patient_msg)
 
@@ -243,10 +244,10 @@ class FiloBluDB(object):
 
           score = self._score.get()
 
-          for id_paziente, scritto_il, sa_score in score:
-            self._cursor.execute('UPDATE messaggi SET sa_score = {0} WHERE id_paziente = {1} AND scritto_il = "{2}"'.format(sa_score, id_paziente, scritto_il))
-
-          self._db.commit()
+#          for id_paziente, scritto_il, sa_score in score:
+#            self._cursor.execute('UPDATE messaggi SET sa_score = {0} WHERE id_paziente = {1} AND scritto_il = "{2}"'.format(sa_score, id_paziente, scritto_il))
+#
+#          self._db.commit()
 
           self._logger.info('Score last messages: {}'.format(list(map(operator.itemgetter(2), score))) )
 

@@ -122,7 +122,7 @@ def radar_factory(num_vars, frame='circle'):
     return theta
 
 
-def radar_plot(bio_params, patient_names=None, title=False):
+def radar_plot(bio_params, patient_names=None, title=True):
 
   theta = radar_factory(len(std_bio_params), frame='polygon')
   color = 'royalblue'
@@ -141,16 +141,24 @@ def radar_plot(bio_params, patient_names=None, title=False):
 
       uniques_patient.add(id_patient)
 
-      params = {k : std_bio_params[k](v) if v else np.nan
+      if 'storage_time' in bio_param:
+        bio_time = bio_param['storage_time']
+        bio_param.pop('storage_time', None)
+      else:
+        bio_time = None
+
+      params = {k : std_bio_params[k](v) if v else 0
                 for k, v in bio_param.items()}
 
       for k in std_bio_params.keys():
         if k not in params:
-          params[k] = np.nan
+          params[k] = 0
 
       if title and id_patient:
-        ax.set_title(id_patient,
-                     weight='bold', size='medium',
+        img_title = 'Paziente ' + str(id_patient)
+        img_title += ' : ' + bio_time.strftime("%m/%d/%Y, %H:%M:%S") if bio_time else ''
+        ax.set_title(img_title,
+                     weight='bold', size=24,
                      position=(0.5, 1.1),
                      horizontalalignment='center',
                      verticalalignment='center')
