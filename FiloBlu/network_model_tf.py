@@ -69,7 +69,7 @@ class NetworkModel(object):
 
 
 
-  def predict(self, text_list, bio_params, dictionary):
+  def predict(self, text_list, bio_params, dictionary, binning):
 
     # pre-process data
     msgs = [preprocess(line, dictionary) for line in text_list]
@@ -85,7 +85,17 @@ class NetworkModel(object):
 
       y_pred = self.net.predict(text_data, batch_size=self.BATCH_SIZE)
 
-    return list(map(int, y_pred.ravel()))
+    # binning the value between [1, 4]
+
+    if binning:
+      bins = [0., .25, .5, .75, 1.]
+      y_pred = np.digitize(y_pred, bins)
+
+      return list(map(int, y_pred))
+
+    else:
+
+      return list(map(float, y_pred))
 
 
 if __name__ == '__main__':

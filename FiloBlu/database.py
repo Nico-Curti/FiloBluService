@@ -126,8 +126,8 @@ class FiloBluDB(object):
                                           )
         self._cursor = self._db.cursor()
 
-        #self._cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}" AND sa_score = 0'.format(now, interval_time))
-        self._cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}"'.format(now)) # FOR DEBUG
+        self._cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}" AND scritto_il >= "{1}" AND sa_score = 0'.format(now, interval_time))
+        #self._cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}"'.format(now)) # FOR DEBUG
         result_query = self._cursor.fetchall()
 
         self._logger.info('Found {} messages to process'.format(len(result_query)))
@@ -244,10 +244,10 @@ class FiloBluDB(object):
 
           score = self._score.get()
 
-#          for id_paziente, scritto_il, sa_score in score:
-#            self._cursor.execute('UPDATE messaggi SET sa_score = {0} WHERE id_paziente = {1} AND scritto_il = "{2}"'.format(sa_score, id_paziente, scritto_il))
-#
-#          self._db.commit()
+          for id_paziente, scritto_il, sa_score in score:
+            self._cursor.execute('UPDATE messaggi SET sa_score = {0} WHERE id_paziente = {1} AND scritto_il = "{2}"'.format(sa_score, id_paziente, scritto_il))
+
+          self._db.commit()
 
           self._logger.info('Score last messages: {}'.format(list(map(operator.itemgetter(2), score))) )
 

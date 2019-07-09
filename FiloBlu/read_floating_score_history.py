@@ -4,15 +4,18 @@
 import os
 import json
 import mysql.connector
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
-__package__ = 'Filo Blu Read Messages Query'
+__package__ = 'Filo Blu Floating Point score of message history'
 
 # global variables that must be set and used in the following class
 # The paths are relative to the current python file
 CONFIGFILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'config.json'))
+DICTIONARY = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat'))
+MODEL = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.pkl'))
 
 def parse_args():
   """
@@ -41,6 +44,22 @@ def parse_args():
                       help='Json configuration file for DB credentials',
                       default=CONFIGFILE
                       )
+  parser.add_argument('--network_model',
+                      dest='model',
+                      type=str,
+                      required=False,
+                      action='store',
+                      help='Network Model weights filename',
+                      default=MODEL
+                      )
+  parser.add_argument('--dictionary',
+                      dest='dictionary',
+                      type=str,
+                      required=False,
+                      action='store',
+                      help='Word dictionary sorted by frequency',
+                      default=DICTIONARY
+                      )
 
 
   args = parser.parse_args()
@@ -61,6 +80,18 @@ if __name__ == '__main__':
   with open(args.config, 'r', encoding='utf-8') as fp:
     config = json.load(fp)
 
+  # Load Dictionary
+
+  from misc import read_dictionary
+
+  dictionary = read_dictionary(args.dictionary)
+
+  # Load NN model
+
+  from network_model_np import NetworkModel
+
+  net = NetworkModel(args.model)
+
   db = mysql.connector.connect(
                               host = config['host'],
                               user = config['username'],
@@ -71,7 +102,7 @@ if __name__ == '__main__':
 
   now = datetime.now()
 
-  cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}" AND sa_score = 0'.format(now))
+  cursor.execute('SELECT id_paziente, testo, scritto_il FROM messaggi WHERE scritto_il < "{0}"'.format(now))
 
   result_query = cursor.fetchall()
 
@@ -79,7 +110,6 @@ if __name__ == '__main__':
 
     patient_msg, text_msg, time_msg = zip(*result_query)
 
-    # looking for biological parameters
     # looking for biological parameters
     cursor.execute('SELECT parametri_rilevati.id_paziente, parametri_rilevati.valore, parametri.nome \
                     AS nome_parametro, parametri_rilevati_gruppo.data AS nome_gruppo \
@@ -108,5 +138,18 @@ if __name__ == '__main__':
       if data_to_process[i] is None:
         data_to_process[i] = (text_msg[i], patient_msg[i], None, time_msg[i])
 
-    print(data_to_process)
+    # start to process
+
+    text_msg, patient_id, bio_params, time_msg = zip(*data_to_process)
+
+    score = net.predict(text_msg, bio_params, dictionary, binning=False)
+
+    results_to_write = [(Id, txt, time, s) for s, Id, time, txt in zip(score, patient_id, time_msg, text_msg)]
+
+    with open(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'floating_score_history.csv')), 'w', encoding='utf-8') as fp:
+      fp.write('patient_id,text_message,time,floating_score\n')
+
+      for p_id, txt, time, s in results_to_write:
+        txt = txt.replace('\n', '').replace('\r', '')
+        fp.write(','.join([str(p_id), '"' + txt + '"', time.strftime("%m/%d/%Y_%H:%M:%S"), str(s)]) + '\n')
 

@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
   try:
 
-    from network_model import NetworkModel
+    from network_model_tf import NetworkModel
 
     net = NetworkModel(args.model)
     db.get_logger.info('MODEL LOADED')
@@ -135,13 +135,14 @@ if __name__ == '__main__':
 
 
   db.callback_read_last_messages()
-  time.sleep(.5)
+  time.sleep(10)
   db.callback_process_messages(net, dictionary)
-  time.sleep(.5)
+  time.sleep(10)
   db.callback_write_score_messages()
 
   db.callback_load_new_weights(args.model, args.update_dir)
   db.callback_clear_log()
+  db.callback_score_history_log(args.update_dir)
 
   db.get_logger.info('FILO BLU Service: STARTING UP')
 
