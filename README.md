@@ -2,11 +2,11 @@
 |:------------:|:-----------:|
 | [**N. Curti**](https://github.com/Nico-Curti) <br/> **A. Ciardiello** <br/> [**S. Giagu**](https://github.com/stefanogiagu)  |  **FiloBlu**  |
 
-[![GitHub pull-requests](https://img.shields.io/github/issues-pr/Nico-Curti/FiloBlu.svg?style=plastic)](https://github.com/Nico-Curti/FiloBlu/pulls)
-[![GitHub issues](https://img.shields.io/github/issues/Nico-Curti/FiloBlu.svg?style=plastic)](https://github.com/Nico-Curti/FiloBlu/issues)
+[![GitHub pull-requests](https://img.shields.io/github/issues-pr/Nico-Curti/FiloBluService.svg?style=plastic)](https://github.com/Nico-Curti/FiloBlu/pulls)
+[![GitHub issues](https://img.shields.io/github/issues/Nico-Curti/FiloBluService.svg?style=plastic)](https://github.com/Nico-Curti/FiloBluService/issues)
 
-[![GitHub stars](https://img.shields.io/github/stars/Nico-Curti/FiloBlu.svg?label=Stars&style=social)](https://github.com/Nico-Curti/FiloBlu/stargazers)
-[![GitHub watchers](https://img.shields.io/github/watchers/Nico-Curti/FiloBlu.svg?label=Watch&style=social)](https://github.com/Nico-Curti/FiloBlu/watchers)
+[![GitHub stars](https://img.shields.io/github/stars/Nico-Curti/FiloBluService.svg?label=Stars&style=social)](https://github.com/Nico-Curti/FiloBluService/stargazers)
+[![GitHub watchers](https://img.shields.io/github/watchers/Nico-Curti/FiloBluService.svg?label=Watch&style=social)](https://github.com/Nico-Curti/FiloBluService/watchers)
 
 | [<img src="https://cdn.rawgit.com/physycom/templates/697b327d/logo_unibo.png" width="100px;"/><br /><sub><b>**UNIBO**</b></sub>](https://github.com/UniboDIFABiophysics)<br /> | [<img src="https://upload.wikimedia.org/wikipedia/it/d/d6/Sapienza_stemma.png" width="100px;"/><br /><sub><b>**Sapienza**</b></sub>](https://www.phys.uniroma1.it/fisica/)<br /> | [<img src="http://www.bimind.it/images/logo-it.png" width="100px;"/><br /><sub><b>**BiMind**</b></sub>](http://www.bimind.it/)<br /> |
 | :---: | :---: | :---: |
@@ -99,4 +99,4 @@ The `FiloBlu` package is licensed under the MIT "Expat" License. [![License](htt
 ### Acknowledgment
 
 Thanks goes to the BiMind company for their collaboration in the development of this project.
-An important thanks goes to [Alessandro Fabbri](https://github.com/allefabbri) for the important support in the development of the service manager application.
+A big thank goes to [Alessandro Fabbri](https://github.com/allefabbri) for the important support in the development of the service manager application.
