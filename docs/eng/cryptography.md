@@ -17,3 +17,4 @@ Since this second implementation could be used also for other applications it wa
 The `CryptoSocket` package can be installed via [`CMake`](https://github.com/Nico-Curti/CryptoSocket/blob/master/CMakeLists.txt) in any platform and operative system and a full list of installation instructions is provided in the project repository.
 The continuous integration of the project is guaranteed by testing the package installation across multiple `C++` compilers and platforms via [Travis CI](https://github.com/Nico-Curti/CryptoSocket/blob/master/.travis.yml) and [Appveyor CI](https://github.com/Nico-Curti/CryptoSocket/blob/master/appveyor.yml).
 
+[**<< begin**](../index.md)
