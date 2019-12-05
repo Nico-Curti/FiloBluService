@@ -1,0 +1,15 @@
+---
+engines:
+  rubocop:
+    exclude_paths:
+      - FiloBlu/__init__.py
+  duplication:
+    exclude_paths:
+      - FiloBlu/read_floating_score_hystory.py
+      - FiloBlu/read_last_bio_params.py
+      - FiloBlu/read_last_messages.py
+      - FiloBlu/read_score_messages.py
+
+pylint:
+  enabled: true
+  python_version: 3
