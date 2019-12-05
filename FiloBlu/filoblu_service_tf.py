@@ -13,7 +13,6 @@ from subprocess import Popen, PIPE
 
 __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
-__package__ = 'Filo Blu Service'
 
 
 # Service log file ( different for process logfile!! )

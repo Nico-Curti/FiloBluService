@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 
 __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
-__package__ = 'Filo Blu Read Messages Score-Validation Query'
 
 # global variables that must be set and used in the following class
 # The paths are relative to the current python file

@@ -19,7 +19,6 @@ DEFAULT_GRAPH = tf.get_default_graph()
 
 __author__ = ['Andrea Ciardiello', 'Stefano Giagu', 'Nico Curti']
 __email__ = ['andrea.ciardiello@gmail.com', 'stefano.giagu@roma1.infn.it', 'nico.curti2@unibo.it']
-__package__ = 'Filo Blu Neural Network Model'
 
 class NetworkModel(object):
 

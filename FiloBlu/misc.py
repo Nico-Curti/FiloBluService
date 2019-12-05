@@ -2,14 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import re
-import time
 import string
 import threading
 import unicodedata
 import numpy as np
 from functools import wraps
 
-__package__ = 'Filo Blu miscellaneous'
 __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
 

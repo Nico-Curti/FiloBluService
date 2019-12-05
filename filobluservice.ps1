@@ -16,7 +16,7 @@ function Test-Administrator
 
 if (-not (Test-Administrator))
 {
-  Write-Host "This script must be executed as Administrator." -ForegroundColor Red
+  Write-Verbose "This script must be executed as Administrator." -ForegroundColor Red
   exit 1;
 }
 else
@@ -27,7 +27,7 @@ else
 
   if ( -not $service )
   {
-    Write-Host "The Service is not installed. Automatically installed and started" -ForegroundColor Green
+    Write-Verbose "The Service is not installed. Automatically installed and started" -ForegroundColor Green
     Push-Location > $null
     Set-Location $path_to_filoblu_service_file
     New-Item -Path ..\logs -ItemType directory -Force -ErrorAction SilentlyContinue > $null
@@ -38,7 +38,7 @@ else
   }
   elseif ( $service.Status -eq "Stopped" )
   {
-    Write-Host "The Service is stopped. Automatically updated and re-started" -ForegroundColor Green
+    Write-Verbose "The Service is stopped. Automatically updated and re-started" -ForegroundColor Green
     Push-Location > $null
     Set-Location $path_to_filoblu_service_file
     New-Item -Path ..\logs -ItemType directory -Force -ErrorAction SilentlyContinue > $null
@@ -50,7 +50,7 @@ else
   {
     if ( $args[0] -eq "Stop" -Or $args[0] -eq "stop" -Or $args[0] -eq "STOP" )
     {
-      Write-Host "The Service is running. Force stop" -ForegroundColor Green
+      Write-Verbose "The Service is running. Force stop" -ForegroundColor Green
       Push-Location > $null
       Set-Location $path_to_filoblu_service_file
       New-Item -Path ..\logs -ItemType directory -Force -ErrorAction SilentlyContinue > $null
@@ -59,7 +59,7 @@ else
     }
     else
     {
-      Write-Host "The Service is running. Re-started with updates" -ForegroundColor Green
+      Write-Verbose "The Service is running. Re-started with updates" -ForegroundColor Green
       Push-Location > $null
       Set-Location $path_to_filoblu_service_file
       New-Item -Path ..\logs -ItemType directory -Force -ErrorAction SilentlyContinue > $null
@@ -71,6 +71,6 @@ else
   }
   else
   {
-    Write-Host "Unrecognized Service Status." -ForegroundColor Red
+    Write-Verbose "Unrecognized Service Status." -ForegroundColor Red
   }
 }

@@ -14,7 +14,6 @@ from matplotlib.transforms import Affine2D
 
 __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
-__package__ = 'Filo Blu biological data radar plot'
 
 
 IMAGE_DESTINATION_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'img'))
@@ -67,7 +66,7 @@ def radar_factory(num_vars, frame='circle'):
             # rotate plot such that the first axis is at the top
             self.set_theta_zero_location('N')
 
-        def fill(self, *args, closed=True, **kwargs):
+        def fill(self, closed=True, *args, **kwargs):
             """Override fill so that line is closed by default"""
             return super().fill(closed=closed, *args, **kwargs)
 

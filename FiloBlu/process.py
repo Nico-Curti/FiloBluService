@@ -6,7 +6,6 @@ import time
 
 __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
-__package__ = 'Filo Blu Process service'
 
 # global variables that must be set and used in the following class
 # The paths are relative to the current python file

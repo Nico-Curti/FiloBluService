@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, division
+from __future__ import print_function
+from __future__ import division
 
 import os
 import sys
@@ -10,11 +11,10 @@ import getpass
 import requests
 from zipfile import ZipFile
 
-__package__ = 'Download Neural Network weights file'
 __author__  = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
 
-def download_file_from_google_drive(Id, destination, total_length = 1505781):
+def download_file_from_google_drive(Id, destination, total_length=1505781):
 
   url = 'https://docs.google.com/uc?export=download'
 

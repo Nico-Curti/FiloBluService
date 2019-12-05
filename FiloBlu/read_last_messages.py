@@ -4,11 +4,11 @@
 import os
 import json
 import mysql.connector
-from datetime import datetime, timedelta
+from datetime import datetime
+from collections import defaultdict
 
 __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
-__package__ = 'Filo Blu Read Messages Query'
 
 # global variables that must be set and used in the following class
 # The paths are relative to the current python file

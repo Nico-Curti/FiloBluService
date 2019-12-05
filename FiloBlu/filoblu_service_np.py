@@ -12,7 +12,6 @@ from database import FiloBluDB
 
 __author__ = 'Nico Curti'
 __email__ = 'nico.curti2@unibo.it'
-__package__ = 'Filo Blu Service'
 
 
 # global variables that must be set and used in the following class
@@ -151,6 +150,8 @@ class FiloBluService (win32serviceutil.ServiceFramework):
     # if the stop event hasn't been fired keep looping
     while rc != win32event.WAIT_OBJECT_0:
 
+      from network_model_np import NetworkModel
+
       if self._db._wait:
         self._net = NetworkModel(MODEL)
         self._db._wait = False
@@ -251,7 +252,7 @@ if __name__ == '__main__':
     # the second part is related to the parameters given by keywords
     argv = argv[argv.index('--') + 1:]
 
-    args = parser.parse_args(argv)
+    args = parse_args(argv)
 
     CONFIGFILE = args.config
     MODEL = args.model
