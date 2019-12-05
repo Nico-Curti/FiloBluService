@@ -1,0 +1,31 @@
+site_name:          FiloBluService
+repo_url:           https://github.com/Nico-Curti/FiloBluService
+site_description:   FiloBlu Service Manager for text message processing
+site_author:        https://www.unibo.it/sitoweb/nico.curti2
+
+extra_css:          assets/Documenter.css
+
+extra_javascript:
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+  - assets/mathjaxhelper.js
+
+markdown_extensions:
+  - extra
+  - tables
+  - fenced_code
+  - mdx_math
+
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: true
+
+include:
+  - index.md
+  - authors.md
+  - eng/intro.md
+  - eng/service.md
+  - eng/cryptography.md
+
+theme:              jekyll-theme-slate

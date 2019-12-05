@@ -1,6 +1,6 @@
-| **Authors**  | **Project** | **Code Quality** |
-|:------------:|:-----------:|:----------------:|
-| [**N. Curti**](https://github.com/Nico-Curti) <br/> [**A. Ciardiello**](https://github.com/pumazzo) <br/> [**S. Giagu**](https://github.com/stefanogiagu)  |  **FiloBlu**  | **Codacy** : [![Codacy Badge](https://api.codacy.com/project/badge/Grade/3018adc32c7b4f63b0c193de1efc5b6f)](https://www.codacy.com/manual/Nico-Curti/FiloBluService?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Nico-Curti/FiloBluService&amp;utm_campaign=Badge_Grade) <br/> **Codebeat**: [![codebeat badge](https://codebeat.co/badges/baf964ad-d58c-4d4b-b57c-09d99cc2c53a)](https://codebeat.co/projects/github-com-nico-curti-filobluservice-master) |
+| **Authors**  | **Project** | **Code Quality** | **Documentation** |
+|:------------:|:-----------:|:----------------:|:-----------------:|
+| [**N. Curti**](https://github.com/Nico-Curti) <br/> [**A. Ciardiello**](https://github.com/pumazzo) <br/> [**S. Giagu**](https://github.com/stefanogiagu)  |  **FiloBlu**  | **Codacy** : [![Codacy Badge](https://api.codacy.com/project/badge/Grade/3018adc32c7b4f63b0c193de1efc5b6f)](https://www.codacy.com/manual/Nico-Curti/FiloBluService?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Nico-Curti/FiloBluService&amp;utm_campaign=Badge_Grade) <br/> **Codebeat**: [![codebeat badge](https://codebeat.co/badges/baf964ad-d58c-4d4b-b57c-09d99cc2c53a)](https://codebeat.co/projects/github-com-nico-curti-filobluservice-master) | [![docs](https://img.shields.io/badge/documentation-latest-blue.svg?style=plastic)](https://nico-curti.github.io/FiloBluService/) |
 
 [![GitHub pull-requests](https://img.shields.io/github/issues-pr/Nico-Curti/FiloBluService.svg?style=plastic)](https://github.com/Nico-Curti/FiloBluService/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/Nico-Curti/FiloBluService.svg?style=plastic)](https://github.com/Nico-Curti/FiloBluService/issues)
@@ -24,10 +24,7 @@ The module implements a windows service application for the processing of medica
 4. [License](#license)
 5. [Acknowledgments](#acknowledgments)
 
-A slight overview about theoretical background of services and the computational strategies chosen in this project is provided in the [docs](https://github.com/Nico-Curti/FiloBluService/blob/docs) folder:
-
-- [ENG](https://github.com/Nico-Curti/FiloBluService/blob/master/docs/eng/intro.md)
-- [ITA](https://github.com/Nico-Curti/FiloBluService/blob/master/docs/ita/intro.md)
+A slight overview about theoretical background of services and the computational strategies chosen in this project is provided [here](./eng/intro.md)
 
 ## Prerequisites
 
