@@ -45,12 +45,12 @@ class NetworkModel(object):
 
     Input_txt = Input(shape=(self.MAX_WORDS,), name='input_txt')
 
-    # dense_1
-    x = Dense(16, input_shape=(self.MAX_WORDS,), name='dense_1')(Input_txt)
+    # dense_1 # len was 16
+    x = Dense(32, input_shape=(self.MAX_WORDS,), name='dense_1')(Input_txt)
     x = Activation('relu', name='activation_1')(x)
 
-    # dense_2
-    x = Dense(8, name='dense_2')(x)
+    # dense_2 # len was 8
+    x = Dense(16, name='dense_2')(x)
     x = Activation('relu', name='activation_2')(x)
 
     # dual output
