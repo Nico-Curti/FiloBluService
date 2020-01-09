@@ -32,17 +32,9 @@ def download_file_from_google_drive(Id, destination, total_length=1505781):
       for chunk in response.iter_content(chunk_size):
         dl += len(chunk)
         done = int(50 * dl / total_length)
-        sys.stdout.write('\r[%s%s] %3d%% (%1.1f Mb/sec) %3.0f sec' % ('=' * done,
-                                                                   ' ' * (50 - done),
-                                                                   dl / total_length * 100,
-                                                                   len(chunk) / 1000000 / (time.time() - download),
-                                                                   time.time() - start)
-                                                                  )
         download = time.time()
-        sys.stdout.flush()
         if chunk: # filter out keep-alive new chunks
           fp.write(chunk)
-    sys.stdout.write('\n')
 
   session  = requests.Session()
   response = session.get(url, params = {'id' : Id }, stream = True)
@@ -82,13 +74,13 @@ def get_weights(Id):
   except:
     os.makedirs(os.path.join(here, '../data'))
 
-  os.rename('./SAna_DNN_trained_0_weights.h5'.format(file.lower()), os.path.join(here, '../data/SAna_DNN_trained_0_weights.h5'.format(file.lower())) )
-  os.rename('./SAna_DNN_trained_0_weights.pkl'.format(file.lower()), os.path.join(here, '../data/SAna_DNN_trained_0_weights.pkl'.format(file.lower())) )
-  os.rename('./DB_parole_filter.dat'.format(file.lower()), os.path.join(here, '../data/DB_parole_filter.dat'.format(file.lower())) )
+  os.rename('./dual_w_0_2_class_ind_cw.h5'.format(file.lower()), os.path.join(here, '../data/dual_w_0_2_class_ind_cw.h5'.format(file.lower())) )
+  os.rename('./dual_w_0_2_class_ind_cw.pkl'.format(file.lower()), os.path.join(here, '../data/dual_w_0_2_class_ind_cw.pkl'.format(file.lower())) )
+  os.rename('./updated_dictionary.dat'.format(file.lower()), os.path.join(here, '../data/updated_dictionary.dat'.format(file.lower())) )
 
   os.remove('./{}.zip'.format(file.lower()))
 
 
 if __name__ == '__main__':
 
-  get_weights('13hoXQhqUR2IosPNpyyM8hu1T6nbaU6zP')
+  get_weights('1BS4NgdvyTKDsVRgeVbzMOKm6hJG5u9u')
