@@ -17,9 +17,9 @@ KEYWORDS = "query windows-service"
 
 # What packages are required for this module to be executed?
 def get_requires():
-    with open('requirements.txt', 'r') as f:
-        requirements = f.read()
-    return list(filter(lambda x: x != '', requirements.split()))
+  with open('requirements.txt', 'r') as f:
+    requirements = f.read()
+  return list(filter(lambda x: x != '', requirements.split()))
 
 # What packages are optional?
 EXTRAS = {
@@ -32,18 +32,18 @@ here = os.path.abspath(os.path.dirname(__file__))
 # Import the README and use it as the long-description.
 # Note: this will only work if 'README.md' is present in your MANIFEST.in file!
 try:
-    with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
-        long_description = '\n' + f.read()
+  with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = '\n' + f.read()
 except FileNotFoundError:
-    long_description = DESCRIPTION
+  long_description = DESCRIPTION
 
 # Load the package's __version__.py module as a dictionary.
 about = {}
 if not VERSION:
-    with open(os.path.join(here, 'FiloBlu', '__version__.py')) as f:
-        exec(f.read(), about)
+  with open(os.path.join(here, 'FiloBlu', '__version__.py')) as f:
+    exec(f.read(), about)
 else:
-    about['__version__'] = VERSION
+  about['__version__'] = VERSION
 
 # Where the magic happens:
 setup(

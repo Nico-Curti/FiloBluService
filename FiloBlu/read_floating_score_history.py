@@ -13,8 +13,8 @@ __email__ = 'nico.curti2@unibo.it'
 # global variables that must be set and used in the following class
 # The paths are relative to the current python file
 CONFIGFILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'config.json'))
-DICTIONARY = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat'))
-MODEL = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.pkl'))
+DICTIONARY = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'updated_dictionary.dat'))
+MODEL = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'dual_w_0_2_class_ind_cw.pkl'))
 
 def parse_args():
   """

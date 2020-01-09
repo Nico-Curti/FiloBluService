@@ -9,8 +9,8 @@ __email__ = 'nico.curti2@unibo.it'
 
 # global variables that must be set and used in the following class
 # The paths are relative to the current python file
-DICTIONARY = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat'))
-MODEL = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.h5'))
+DICTIONARY = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'updated_dictionary.dat'))
+MODEL = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'dual_w_0_2_class_ind_cw.h5'))
 CONFIGFILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'config.json'))
 LOGFILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'logs', 'filo_blu_process_service.log'))
 UPDATE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'updates'))
@@ -32,7 +32,7 @@ def parse_args():
   import argparse
 
 
-  description = "Filo Blu Process Service"
+  description = 'Filo Blu Process Service'
 
   parser = argparse.ArgumentParser(description = description)
   parser.add_argument('--config',

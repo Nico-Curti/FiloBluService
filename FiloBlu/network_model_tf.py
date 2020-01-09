@@ -46,19 +46,25 @@ class NetworkModel(object):
     Input_txt = Input(shape=(self.MAX_WORDS,), name='input_txt')
 
     # dense_1
-    x = Dense(16, input_shape=(self.MAX_WORDS,), name='dense_1')(Input_txt)
+    x = Dense(32, input_shape=(self.MAX_WORDS,), name='dense_1')(Input_txt)
     x = Activation('relu', name='activation_1')(x)
 
     # dense_2
-    x = Dense(8, name='dense_2')(x)
+    x = Dense(16, name='dense_2')(x)
     x = Activation('relu', name='activation_2')(x)
 
-    # dense_3 (output layer)
-    x = Dense(1, name='dense_3')(x)
-    out = Activation('sigmoid', name='activation_3')(x)
+    # dual output
+
+    # type output
+    out_type = Dense(3, name='out_type')(x)
+    out_type = Activation('softmax', name='activation_type')(out_type)
+
+    # prediction output
+    out_P = Dense(4, name='out_P')(x)
+    out_P = Activation('softmax', name='activation_P')(out_P)
 
     # model:
-    nnet = Model(inputs=[Input_txt], outputs=out)
+    nnet = Model(inputs=[Input_txt], outputs=[out_type, out_P])
 
     return nnet
 
@@ -68,7 +74,7 @@ class NetworkModel(object):
 
 
 
-  def predict(self, text_list, bio_params, dictionary, binning):
+  def predict(self, text_list, bio_params, dictionary):#, binning=True):
 
     # pre-process data
     msgs = [preprocess(line, dictionary) for line in text_list]
@@ -82,19 +88,24 @@ class NetworkModel(object):
     # predict the whole list + biological parameters
     with DEFAULT_GRAPH.as_default():
 
-      y_pred = self.net.predict(text_data, batch_size=self.BATCH_SIZE)
+      # dual out - divided to be compatible with last version
+      # y_type is topics prediction
+      # y_pred is priority prediction as last version - 4 float as probability for each attention level
+      y_type, y_pred = self.net.predict(text_data, batch_size=self.BATCH_SIZE)
+
+    y_pred = np.argmax(y_pred, axis=1) + 1 # class assignment 1 - less attention
 
     # binning the value between [1, 4]
 
-    if binning:
-      bins = [0., .25, .5, .75, 1.]
-      y_pred = np.digitize(y_pred, bins)
+    # if binning:
+    #   bins = [0., .25, .5, .75, 1.]
+    #   y_pred = np.digitize(y_pred, bins)
+    #
+    #   return list(map(int, y_pred))
 
-      return list(map(int, y_pred))
+    # else:
 
-    else:
-
-      return list(map(float, y_pred))
+    return list(map(float, y_pred))
 
 
 if __name__ == '__main__':
@@ -102,8 +113,8 @@ if __name__ == '__main__':
   import os
   from misc import read_dictionary
 
-  weightfile = os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.h5')
-  dictionary_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat')
+  weightfile = os.path.join(os.path.dirname(__file__), '..', 'data', 'dual_w_0_2_class_ind_cw.h5')
+  dictionary_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'updated_dictionary.dat')
 
   nnet = NetworkModel(weightfile)
   print(nnet.summary())

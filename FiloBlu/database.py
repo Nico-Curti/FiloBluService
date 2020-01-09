@@ -452,8 +452,8 @@ if __name__ == '__main__':
   os.makedirs(update_directory, exist_ok=True)
 
   logfile = os.path.join(log_directory, 'filo_blu_service.log')
-  dictionary = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat'))
-  model = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.pkl'))
+  dictionary = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'updated_dictionary.dat'))
+  model = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'dual_w_0_2_class_ind_cw.pkl'))
 
   filoblu = FiloBluDB(config_file, logfile)
 

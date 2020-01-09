@@ -124,6 +124,11 @@ class NetworkModel(object):
     sigm = 1. / (1. + np.exp(-x))
     return sigm * (1. - sigm) if derivate else sigm
 
+  def _softmax(self, x):
+    output = np.exp(x - x.max(axis=-1, keepdims=True))
+    s = 1. / output.sum(axis=-1, keepdims=True)
+    return output * s
+
   def _relu(self, x):
     x[x < 0] = 0.
     return x
@@ -148,13 +153,18 @@ class NetworkModel(object):
     #net.append( Input(shape=(1, self.MAX_WORDS), name='input_txt') )
 
     # dense_1
-    net.append( Dense(16, self.MAX_WORDS, self._relu, name='dense_1', weights=model[0], biases=model[1]) )
+    net.append( Dense(32, self.MAX_WORDS, self._relu, name='dense_1', weights=model[0], biases=model[1]) )
 
     # dense_2
-    net.append( Dense(8, net[-1].outputs, self._relu, name='dense_2', weights=model[2], biases=model[3]) )
+    net.append( Dense(16, net[-1].outputs, self._relu, name='dense_2', weights=model[2], biases=model[3]) )
 
-    # dense_3
-    net.append( Dense(1, net[-1].outputs, self._sigmoid, name='dense_3', weights=model[4], biases=model[5]) )
+    # dual output
+
+    # type / prediction output
+    net.append( (
+                  Dense(3, net[-1].outputs, self._softmax, name='out_type', weights=model[4], biases=model[5])
+                  Dense(4, net[-1].outputs, self._softmax, name='out_type', weights=model[6], biases=model[7])
+                 ) )
 
     return net
 
@@ -191,14 +201,17 @@ class NetworkModel(object):
     score = np.empty(shape=(len(input_data), ))
     for i, data in enumerate(input_data):
       for layer in self.net:
-        res = layer.predict(data)
+        try:
+          res = layer.predict(data)
+        except AttributeError:
+          res = (layer[0].predict(data), layer[1].predict(data))
         data = res
       score[i] = res
 
     return score
 
 
-  def predict(self, text_list, bio_params, dictionary, binning=True):
+  def predict(self, text_list, bio_params, dictionary):#, binning=True):
 
     # pre-process data
     msgs = [preprocess(line, dictionary) for line in text_list]
@@ -211,19 +224,24 @@ class NetworkModel(object):
 
     # predict the whole list
 
-    y_pred = self._predict(text_data) # miss biological parameter pre-processed
+    # dual out - divided to be compatible with last version
+    # y_type is topics prediction
+    # y_pred is priority prediction as last version - 4 float as probability for each attention level
+    y_type, y_pred = self._predict(text_data)
+
+    y_pred = np.argmax(y_pred, axis=1) + 1 # class assignment 1 - less attention
 
     # binning the value between [1, 4]
 
-    if binning:
-      bins = [0., .25, .5, .75, 1.]
-      y_pred = np.digitize(y_pred, bins)
+    # if binning:
+    #   bins = [0., .25, .5, .75, 1.]
+    #   y_pred = np.digitize(y_pred, bins)
 
-      return list(map(int, y_pred))
+    #   return list(map(int, y_pred))
 
-    else:
+    # else:
 
-      return list(map(float, y_pred))
+    return list(map(float, y_pred))
 
 
 if __name__ == '__main__':
@@ -231,8 +249,8 @@ if __name__ == '__main__':
   import os
   from misc import read_dictionary
 
-  weightfile = os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.pkl')
-  dictionary_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat')
+  weightfile = os.path.join(os.path.dirname(__file__), '..', 'data', 'dual_w_0_2_class_ind_cw.pkl')
+  dictionary_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'updated_dictionary.dat')
 
   nnet = NetworkModel(weightfile)
 
