@@ -53,12 +53,16 @@ class NetworkModel(object):
     x = Dense(8, name='dense_2')(x)
     x = Activation('relu', name='activation_2')(x)
 
+    # dual output
     # dense_3 (output layer)
-    x = Dense(1, name='dense_3')(x)
-    out = Activation('sigmoid', name='activation_3')(x)
-
-    # model:
-    nnet = Model(inputs=[Input_txt], outputs=out)
+    out_type = Dense(3, name='out_type')(x)
+    out_type = Activation('softmax', name='activation_type')(out_type)
+    
+    # dense_3 (output layer)
+    out_P = Dense(4, name='out_P')(x)
+    out_P = Activation('softmax', name='activation_P')(out_P)    
+   
+    nnet = Model(inputs=[Input_txt], outputs=[out_type,out_P])
 
     return nnet
 
@@ -82,19 +86,25 @@ class NetworkModel(object):
     # predict the whole list + biological parameters
     with DEFAULT_GRAPH.as_default():
 
-      y_pred = self.net.predict(text_data, batch_size=self.BATCH_SIZE)
+      dual_pred = self.net.predict(text_data, batch_size=self.BATCH_SIZE)
+      #dual out - divided to be compatible with last version
+      #y_type is topics prediction. y_pred is priority prediction as last version
+      type_pred = dual_pred[0] # topics prediction, not used
+      y_pred = dual_pred[1] # priority prediction - 4 float as probability for each attention level
+      y_pred=np.argmax(y_pred,axis=1)+1  # class assignment 1 -less attention
+                                                          # 4 - most attention
+      
+    #
 
-    # binning the value between [1, 4]
-
-    if binning:
-      bins = [0., .25, .5, .75, 1.]
-      y_pred = np.digitize(y_pred, bins)
+   # if binning: #not required anymore. Now there are 4 indipendent classes
+      #bins = [0., .25, .5, .75, 1.]
+      
+      #y_pred = np.digitize(y_pred, bins)
+    
 
       return list(map(int, y_pred))
 
-    else:
-
-      return list(map(float, y_pred))
+    
 
 
 if __name__ == '__main__':
@@ -102,7 +112,9 @@ if __name__ == '__main__':
   import os
   from misc import read_dictionary
 
-  weightfile = os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.h5')
+  #weightfile = os.path.join(os.path.dirname(__file__), '..', 'data', 'SAna_DNN_trained_0_weights.h5')
+  # NEW architeture
+  weightfile = os.path.join(os.path.dirname(__file__), '..', 'data', 'dual_w_0_2_class_ind_cw.h5')
   dictionary_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'DB_parole_filter.dat')
 
   nnet = NetworkModel(weightfile)
