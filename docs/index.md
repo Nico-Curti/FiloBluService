@@ -8,14 +8,14 @@
 [![GitHub stars](https://img.shields.io/github/stars/Nico-Curti/FiloBluService.svg?label=Stars&style=social)](https://github.com/Nico-Curti/FiloBluService/stargazers)
 [![GitHub watchers](https://img.shields.io/github/watchers/Nico-Curti/FiloBluService.svg?label=Watch&style=social)](https://github.com/Nico-Curti/FiloBluService/watchers)
 
-| ![**UNIBO**](https://cdn.rawgit.com/physycom/templates/697b327d/logo_unibo.png) | ![Sapienza](https://upload.wikimedia.org/wikipedia/it/d/d6/Sapienza_stemma.png) | ![BiMind](http://www.bimind.it/images/logo-it.png) |
-| :---: | :---: | :---: |
+| ![**INFN**](https://home.infn.it/images/news/LOGO_INFN_NEWS_sito.jpg) | ![**UNIBO**](https://cdn.rawgit.com/physycom/templates/697b327d/logo_unibo.png) | ![Sapienza](https://upload.wikimedia.org/wikipedia/it/d/d6/Sapienza_stemma.png) | ![BiMind](http://www.bimind.it/images/logo-it.png) |
+| :---: | :---: | :---: | :---: |
 
 # FiloBlu Service manager
 
 ![FiloBlu Service computation scheme.](./img/FiloBluService.png)
 
-This package is part of the FILOBLU project (*Application of machine learning algorithms to physician-patient communications, within the FILOBLU project*) and was developed by the collaboration between the Physics Department of the University of Bologna and the Physics Department of the University of Rome (*Sapienza*) with the support of [BiMind](http://www.bimind.it/it/) company.
+This package is part of the FILOBLU project (*Application of machine learning algorithms to physician-patient communications, within the FILOBLU project*) and was developed by the collaboration between the INFN Group of the University of Bologna and the INFN Group of the University of Rome (*Sapienza*) with the support of [BiMind](http://www.bimind.it/it/) company.
 The module implements a windows service application for the processing of medical text messages and biological parameters stored in a central DB. With a neural network processing a score/importance is given to provide a possible reading order to the doctors.
 
 1. [Prerequisites](#prerequisites)
