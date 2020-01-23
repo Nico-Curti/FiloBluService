@@ -162,8 +162,8 @@ def radar_plot(bio_params, patient_names=None, title=True):
                      horizontalalignment='center',
                      verticalalignment='center')
 
-      ax.plot(theta, params.values(), '-o', color=color, alpha=.75)
-      ax.fill(theta, params.values(), facecolor=color, alpha=.25)
+      ax.plot(theta, list(params.values()), '-o', color=color, alpha=.75)
+      ax.fill(list(theta), list(params.values()), facecolor=color, alpha=.25)
       ax.set_varlabels([bio_labels[k] for k in params.keys()])
 
 

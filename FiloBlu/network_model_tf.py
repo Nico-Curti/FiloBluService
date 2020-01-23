@@ -81,9 +81,9 @@ class NetworkModel(object):
 
     # Uncomment these lines if you are using a different dictionary
     # msgs = np.asarray(msgs)
-    # msgs = [ [w for w in x if w <= MAX_WORDS] for x in msgs ]
+    msgs = [ [w for w in x if w <= self.MAX_WORDS] for x in msgs ]
 
-    text_data = vectorize_sequence(msgs, dim=len(dictionary))
+    text_data = vectorize_sequence(msgs, dim=self.MAX_WORDS)
 
     # predict the whole list + biological parameters
     with DEFAULT_GRAPH.as_default():
@@ -122,13 +122,13 @@ if __name__ == '__main__':
   ilist = [
            ['buongiorno dottore oggi ho la febbre alta e un fortissimo dolore al rene da una settimana',
            'ciao e tanti auguri di buon natale a lei e famiglia'],
-           None, None, None
+           (None, None, None)
            ]
 
   dictionary = read_dictionary(dictionary_file)
 
 
-  y_pred = nnet.predict(ilist, dictionary)
+  y_pred = nnet.predict(*ilist, dictionary)
 
   print(y_pred)
 

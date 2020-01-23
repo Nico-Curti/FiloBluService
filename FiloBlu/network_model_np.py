@@ -145,7 +145,7 @@ class NetworkModel(object):
     """
     np.random.seed(seed)
 
-    if len(model) != 6:
+    if len(model) != 8:
       raise ValueError('The model loaded not correspond to the NNet architecture')
 
     net = []
@@ -162,7 +162,7 @@ class NetworkModel(object):
 
     # type / prediction output
     net.append( (
-                  Dense(3, net[-1].outputs, self._softmax, name='out_type', weights=model[4], biases=model[5])
+                  Dense(3, net[-1].outputs, self._softmax, name='out_type', weights=model[4], biases=model[5]),
                   Dense(4, net[-1].outputs, self._softmax, name='out_type', weights=model[6], biases=model[7])
                  ) )
 
@@ -176,11 +176,13 @@ class NetworkModel(object):
                          '=================================================================',
                          ''
                        ])
-
-    body = '\n{}\n'.format(separator).join( [
-                                           '{0:29}({1[0]:^5}, {1[1]:^5}){2:^30}'.format(layer.name, layer.shape, layer.size)
-                                           for layer in self.net
-                                            ] )
+    body = ''
+    for layer in self.net:
+      try:
+        body = '\n{}\n'.format(separator).join([body, '{0:29}({1[0]:^5}, {1[1]:^5}){2:^30}'.format(layer.name, layer.shape, layer.size)])
+      except AttributeError:
+        for sublay in layer:
+          body = '\n{}\n'.format(separator).join([body, '{0:29}({1[0]:^5}, {1[1]:^5}){2:^30}'.format(sublay.name, sublay.shape, sublay.size)])
 
     total_params = np.sum([v.size for v in self.net if isinstance(v, np.ndarray)])
 
@@ -198,7 +200,7 @@ class NetworkModel(object):
   def _predict(self, input_data):
 
     input_data = [np.expand_dims(i, axis=0) for i in input_data]
-    score = np.empty(shape=(len(input_data), ))
+    score = np.empty(shape=(len(input_data), ), dtype='object')
     for i, data in enumerate(input_data):
       for layer in self.net:
         try:
@@ -206,6 +208,7 @@ class NetworkModel(object):
         except AttributeError:
           res = (layer[0].predict(data), layer[1].predict(data))
         data = res
+
       score[i] = res
 
     return score
@@ -217,19 +220,19 @@ class NetworkModel(object):
     msgs = [preprocess(line, dictionary) for line in text_list]
 
     # Uncomment these lines if you are using a different dictionary
-    #msgs = np.asarray(msgs)
-    #msgs = [ [w for w in x if w <= MAX_WORDS] for x in msgs ]
+    # msgs = np.asarray(msgs)
+    msgs = [ [w for w in x if w <= self.MAX_WORDS] for x in msgs ]
 
-    text_data = vectorize_sequence(msgs, dim=len(dictionary))
+    text_data = vectorize_sequence(msgs, dim=self.MAX_WORDS)
 
     # predict the whole list
 
     # dual out - divided to be compatible with last version
     # y_type is topics prediction
     # y_pred is priority prediction as last version - 4 float as probability for each attention level
-    y_type, y_pred = self._predict(text_data)
+    y_type, y_pred = zip(*self._predict(text_data))
 
-    y_pred = np.argmax(y_pred, axis=1) + 1 # class assignment 1 - less attention
+    y_pred = np.argmax(np.concatenate(y_pred), axis=1) + 1 # class assignment 1 - less attention
 
     # binning the value between [1, 4]
 
@@ -259,13 +262,13 @@ if __name__ == '__main__':
   ilist = [
            ['buongiorno dottore oggi ho la febbre alta e un fortissimo dolore al rene da una settimana',
            'ciao e tanti auguri di buon natale a lei e famiglia'],
-           None, None, None
+           (None, None, None)
            ]
 
   dictionary = read_dictionary(dictionary_file)
 
 
-  y_pred = nnet.predict(ilist, dictionary)
+  y_pred = nnet.predict(*ilist, dictionary)
 
   print(y_pred)
 
