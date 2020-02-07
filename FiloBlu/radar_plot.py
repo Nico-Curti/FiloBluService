@@ -20,24 +20,35 @@ IMAGE_DESTINATION_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 
 std_bio_params = {
-                    'Atti respiratori'     : lambda x : (x - 10) / (70  - 10) * 100,
-                    'Glicemia'             : lambda x : (x - 50) / (220 - 50) * 100,
-                    'Sistolica (max)'      : lambda x : (x - 90) / (140 - 90) * 100,
-                    'Diastolica (min)'     : lambda x : (x - 50) / (200 - 50) * 100,
-                    'Frequenza'            : lambda x : (x - 50) / (200 - 50) * 100,
-                    'Saturazione'          : lambda x : (x -  0) / (100 -  0) * 100,
-                    'Temperatura'          : lambda x : (x - 35) / (40  - 35) * 100
+                    'Atti respiratori'     : lambda x : (5*x - 50) / 100,
+                    'Glicemia'             : lambda x : (0.5*x - 0) / 100,
+                    'Sistolica (max)'      : lambda x : (0.5*x - 0) / 100,
+                    'Diastolica (min)'     : lambda x : (0.937*x - 3.125) / 100,
+                    'Frequenza'            : lambda x : (0.625*x + 6.25) / 100,
+                    'Saturazione'          : lambda x : (5*x - 400) / 100,
+                    'Temperatura'          : lambda x : (12.5*x - 412.5) / 100
+                  }
+
+std_bio_thick = {#here thicks for standard plot from radar_filo script
+                    'Atti respiratori'     : [15, 20, 25, 30],
+                    'Glicemia'             : [50, 100, 150, 200],
+                    'Sistolica (max)'      : [50, 100, 150, 200],
+                    'Diastolica (min)'     : [30, 60, 90, 110],
+                    'Frequenza'            : [30, 70, 110, 150],
+                    'Saturazione'          : [85, 90, 95, 100],
+                    'Temperatura'          : [35, 37, 39, 41]
                   }
 
 bio_labels = {
               'Atti respiratori' : 'Atti\nrespiratori',      # 10 - 70
-              'Glicemia'         : 'Glicemia' ,              # 50 - 220
-              'Sistolica (max)'  : 'Pressione\nSistolica',   # 90 - 140
-              'Diastolica (min)' : 'Pressione\nDiastolica',  # 90 - 140
-              'Frequenza'        : 'Frequenza\ncardiaca',    # 50 - 200
-              'Temperatura'      : 'Temperatura\ncorporea',  # 35 -  45
+              'Glicemia'         : '\n\nGlicemia\n'+5*''+'(mg/dl)' ,              # 50 - 220
+              'Sistolica (max)'  : 'Pressione\nSistolica\n'+1*' '+ '(mmhg)',   # 90 - 140
+              'Diastolica (min)' : 'Pressione\nDiastolica\n'+1*' '+ '(mmhg)',  # 90 - 140
+              'Frequenza'        : 'Frequenza\ncardiaca\n'+2*' '+ '(bpm)'+'\n\n'+'',    # 50 - 200
+              'Temperatura'      : '\nTemperatura\ncorporea\n'+5*''+'(°C)',  # 35 -  45
               'Saturazione'      : 'Saturazione\nossigeno'   # 0  - 100
               }
+
 
 def radar_factory(num_vars, frame='circle'):
   """Create a radar chart with `num_vars` axes.
@@ -128,9 +139,30 @@ def radar_plot(bio_params, patient_names=None, title=True):
 
   fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 8),
                          subplot_kw=dict(projection='radar'))
+  # one ax for every param
+  axes_list = [ax.figure.add_axes(ax.get_position(), projection='polar', 
+               label='twin'+str(1), frameon=False,
+               theta_direction=ax.get_theta_direction(),
+               theta_offset=ax.get_theta_offset()) for i in range(len(std_bio_params))]
+  
+  
+  
+  asd=bio_params[0]
+  tmp=list(asd.keys())
+  
+  angles = dict(zip(tmp, theta*180/np.pi))#assign correct angle (not in order)
+  ax.set_rgrids([0,0.25,0.50,0.75,1],labels=['','','','',''],angle=1)# to mask current axis
+  ax.set_ylim(0,1)
+  
+  for k,key in zip(range(len(asd)),bio_params[0]):
+      
+      
+      axes_list[k].set_rgrids([0.25,0.50,0.75,1],labels=np.round((np.array(std_bio_thick[key]))),angle=angles[key],fontsize=11,
+                              fontweight='semibold')
+      axes_list[k].xaxis.set_visible(False)
+      axes_list[k].set_ylim(0,1)
 
-  ax.set_rgrids([20, 40, 60, 80])
-
+   
   uniques_patient = set()
 
 
@@ -163,10 +195,10 @@ def radar_plot(bio_params, patient_names=None, title=True):
                      verticalalignment='center')
 
       ax.plot(theta, list(params.values()), '-o', color=color, alpha=.75)
-      ax.fill(list(theta), list(params.values()), facecolor=color, alpha=.25)
+      #ax.fill(list(theta), list(params.values()), facecolor=color, alpha=.25)
       ax.set_varlabels([bio_labels[k] for k in params.keys()])
 
-
+      #plt.show()#show in console  
       if id_patient:
         fig.savefig(os.path.join(IMAGE_DESTINATION_PATH,
                                  'patient_' + str(id_patient)) + '.png',
@@ -180,13 +212,13 @@ if __name__ == '__main__':
   import json
 
   bio_params = {
-                'Diastolica (min)'     :  95,
-                'Atti respiratori'     :  42,
-                'Frequenza'            :  64,
-                'Temperatura'          : 37.3,
-                'Sistolica (max)'      : 124,
+                'Diastolica (min)'     :  60,
+                'Atti respiratori'     :  30,
+                'Frequenza'            :  100,
+                'Temperatura'          : 37,
+                'Sistolica (max)'      : 110,
                 'Glicemia'             : 200,
-                'Saturazione'          : 15
+                'Saturazione'          : 99
                 }
 
   radar_plot([bio_params], ['filoblu'], title=True)
